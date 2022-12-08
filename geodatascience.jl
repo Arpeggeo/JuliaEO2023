@@ -16,8 +16,9 @@ begin
 	using PlutoTeachingTools
 	import PlutoUI
 
-	# table package
+	# auxiliary package
 	using DataFrames
+	using Statistics
 
 	# Plots.jl recipes
 	using GeoStatsPlots
@@ -190,14 +191,14 @@ answer(csv) = georef(csv, (:EAST,:NORTH,:RL))
 
 # ╔═╡ 08485d26-c599-4836-af95-44115c33c611
 begin
-	scored = false
+	scored1 = false
 	a = answer(csv)
 	if ismissing(a)
 		still_missing()
 	elseif a isa Data &&
 	       domain(a) isa PointSet{3} &&
 		   names(values(a) |> DataFrame) == ["Auppm","Agppm","Cuppm","Asppm","Sper","CODE","OX","ISBD"]
-		scored = true
+		scored1 = true
 		correct()
 	else
 		keep_working()
@@ -214,13 +215,32 @@ The result will show below when you get the right answer.
 
 # ╔═╡ d279f14c-ab74-46f3-8ec0-42b4058fda0e
 begin
-	bonnie = scored ? answer(csv) : nothing
+	bonnie = scored1 ? answer(csv) : nothing
 end
 
 # ╔═╡ 44643daf-48fe-4774-bdd6-512030b30ac1
-if scored
+if scored1
 	plot(bonnie, (:Auppm,), size = (600, 600), title = "Found gold!")
 end
+
+# ╔═╡ a199cb3b-0b90-4b1b-b1e7-f80a7596ac42
+md"""
+### Like a DataFrame...
+
+We can index rows and columns of geospatial data. These operations are optimized to avoid unncessary copies of geometries:
+"""
+
+# ╔═╡ 097a7ce4-832e-4982-b762-9903f143ffa1
+griddata[1:3,:]
+
+# ╔═╡ 3a7fc3b9-e613-469e-b806-bb739de8f3dd
+griddata[1,:]
+
+# ╔═╡ 626db287-dd44-4119-866e-1ba63f6f5b46
+griddata[:,:a]
+
+# ╔═╡ 5985148a-0801-4822-9409-bebdd4eaca70
+griddata[:,:geometry]
 
 # ╔═╡ 1961d39a-2088-4036-b969-c58b9fba7a95
 md"""
@@ -353,8 +373,106 @@ revert(p, newdata, cache)
 
 # ╔═╡ 5a50e2b6-4d5b-4a8b-86e6-e125487e88f4
 md"""
-## Advanced geodata science
+## Advanced geodata science 🌎 📊 📈 📉
+
+As geodata scientists, we often need to formulate questions that involve both the attributes and the geometries of geospatial data. Answering these questions with traditional data science software can be extremely painful.
+
+We provide a **geospatial split-apply-combine** with the macros **`@groupby`**, **`@transform`** and **`@combine`**.
+
+To illustrate the functionality, let's start by transforming the point geometries into boxes. We define our transformation function:
 """
+
+# ╔═╡ 0099c2d3-68e6-4e25-a970-f987bcd21b41
+box(point) = Box(point - Vec(0.5,0.5,0.5), point + Vec(0.5,0.5,0.5))
+
+# ╔═╡ 3541c307-52fd-4ac5-9a26-14778c1846da
+md"""
+and apply it to the "`geometry`" column:
+"""
+
+# ╔═╡ 48fe8aa0-166b-4d2b-b79e-55af3d46a29e
+blocks = @transform(data, :geometry = box(:geometry))
+
+# ╔═╡ ee629463-f164-4f4d-96f5-00cb6c742b86
+md"""
+Notice how the new geometry column is correctly interpreted as a `GeometrySet`:
+"""
+
+# ╔═╡ b0f5d306-ed68-4027-96ca-5e3facdf5097
+blocks |> domain
+
+# ╔═╡ cef05884-1b63-4f9d-b3a5-5f18f51f52cb
+md"""
+Let's assume that we are interested in computing the mean and standard deviation of gold grade (`Au`) inside each geology (`geo`). We can write the following:
+"""
+
+# ╔═╡ 851edf21-a5d8-4f29-b2b2-bc5ef1289540
+@chain blocks begin
+	@groupby(:geo)
+	@combine(:μ = mean(:Au), :σ = std(:Au))
+end
+
+# ╔═╡ 4ece65f2-5e99-46e5-9c5d-8881e86d1c1a
+md"""
+The **`@chain`** macro simply takes geospatial data as input and feeds it into the other macros in sequence. Alternatively, we could have obtained the same result into two steps.
+
+First, compute the groups:
+"""
+
+# ╔═╡ 20603dda-e08a-4d09-bbdf-dd5b9426cb4b
+groups = @groupby(blocks, :geo)
+
+# ╔═╡ de1bd127-3984-4bd6-bf4f-879f4f3b01f3
+md"""
+and then, compute the statistics:
+"""
+
+# ╔═╡ 31e34bcf-e307-4349-a1bc-8382c47df190
+@combine(groups, :μ = mean(:Au), :σ = std(:Au))
+
+# ╔═╡ 1a979cb0-b58c-4bcc-82d2-3c5ef7fef844
+md"""
+#### Exercise
+
+We are interested in the total mass of gold (`Au`) that will be mined from each lithology (`litho`). Implement the following split-apply-combine:
+
+1. `@groupby`: group geospatial data into different lithologies
+2. `@transform`: compute the mass of gold ($\rho\times Au \times V(block)$)
+3. `@combine`: sum the mass of all samples inside each lithology
+
+You can commute steps (1) and (2) to debug intermediate results.
+"""
+
+# ╔═╡ f19c0254-854e-4010-bceb-542c923edd78
+mined = @chain blocks begin
+	@groupby(:litho)
+	@transform(:mass = :ρ * :Au * volume(:geometry))
+	@combine(:mass = sum(:mass))
+end
+
+# ╔═╡ f905706b-cddf-4df6-bda1-fab5d76ce22a
+md"""
+What is the total mass to be mined?
+"""
+
+# ╔═╡ 7a551ec9-e922-4ccb-a2e4-cb4655855a9f
+mass = sum(mined.mass)
+
+# ╔═╡ d9130545-c499-4ab2-bae0-6c646b184256
+begin
+	scored2 = false
+	if ismissing(mass)
+		still_missing()
+	elseif mass isa Number && mass ≈ 22898.09798728
+		scored2 = true
+		correct()
+	else
+		keep_working()
+	end
+end
+
+# ╔═╡ bac17589-8f36-43f6-b950-d268f916d748
+hint(md"The function `volume` can be used to compute volumes.")
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -366,6 +484,7 @@ GeoStatsPlots = "cf22561b-6452-4701-9483-6c69015d00e1"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoTeachingTools = "661c6b06-c737-4d37-b85c-46df65de6f69"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
 [compat]
@@ -385,7 +504,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "a0155126c8b6279d0822608070466dc3102e63bb"
+project_hash = "dab91ef451a0c3b7585555f5d7a5e82a6fff285a"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -777,9 +896,9 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "802bfc139833d2ba893dd9e62ba1767c88d708ae"
+git-tree-sha1 = "9a0472ec2f5409db243160a8b030f94c380167a3"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.13.5"
+version = "0.13.6"
 
 [[deps.FiniteDiff]]
 deps = ["ArrayInterfaceCore", "LinearAlgebra", "Requires", "Setfield", "SparseArrays", "StaticArrays"]
@@ -807,9 +926,9 @@ version = "0.4.2"
 
 [[deps.ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions", "StaticArrays"]
-git-tree-sha1 = "10fa12fe96e4d76acfa738f4df2126589a67374f"
+git-tree-sha1 = "187198a4ed8ccd7b5d99c41b69c679269ea2b2d4"
 uuid = "f6369f11-7733-5829-9624-2563aa707210"
-version = "0.10.33"
+version = "0.10.32"
 
 [[deps.FreeType2_jll]]
 deps = ["Artifacts", "Bzip2_jll", "JLLWrappers", "Libdl", "Pkg", "Zlib_jll"]
@@ -859,9 +978,9 @@ version = "0.36.2"
 
 [[deps.GeoStatsBase]]
 deps = ["Combinatorics", "DensityRatioEstimation", "Distances", "Distributed", "Distributions", "LinearAlgebra", "LossFunctions", "MLJModelInterface", "Meshes", "Optim", "ReferenceFrameRotations", "ScientificTypes", "Statistics", "StatsBase", "TableTransforms", "Tables", "Transducers", "TypedTables"]
-git-tree-sha1 = "dd12ff1875e14a021ca88eadcdffda0434d11e77"
+git-tree-sha1 = "e65068477f2ccee26351bb33396df61d54bfffb7"
 uuid = "323cb8eb-fbf6-51c0-afd0-f8fba70507b2"
-version = "0.29.2"
+version = "0.29.3"
 
 [[deps.GeoStatsPlots]]
 deps = ["Distances", "GeoStatsBase", "LinearAlgebra", "MeshPlots", "Meshes", "RecipesBase", "Variography"]
@@ -1029,9 +1148,9 @@ version = "2.1.2+0"
 
 [[deps.JuliaInterpreter]]
 deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
-git-tree-sha1 = "a79c4cf60cc7ddcdcc70acbb7216a5f9b4f8d188"
+git-tree-sha1 = "2a64e529fd5b228224360f80f3314a633f30e0e1"
 uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
-version = "0.9.16"
+version = "0.9.17"
 
 [[deps.KernelDensity]]
 deps = ["Distributions", "DocStringExtensions", "FFTW", "Interpolations", "StatsBase"]
@@ -1236,9 +1355,9 @@ version = "0.1.4"
 
 [[deps.Meshes]]
 deps = ["Bessels", "CircularArrays", "Distances", "IterTools", "LinearAlgebra", "NearestNeighbors", "Random", "ReferenceFrameRotations", "SparseArrays", "StaticArrays", "StatsBase", "Tables", "TransformsBase"]
-git-tree-sha1 = "c7d476ef63cfb2775ccc163b32de9cfa548483d6"
+git-tree-sha1 = "851e7a6f5ba81c0faf2a447f1af971af6497de77"
 uuid = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
-version = "0.26.2"
+version = "0.26.3"
 
 [[deps.MicroCollections]]
 deps = ["BangBang", "InitialValues", "Setfield"]
@@ -1401,9 +1520,9 @@ version = "3.1.0"
 
 [[deps.PlotUtils]]
 deps = ["ColorSchemes", "Colors", "Dates", "Printf", "Random", "Reexport", "SnoopPrecompile", "Statistics"]
-git-tree-sha1 = "21303256d239f6b484977314674aef4bb1fe4420"
+git-tree-sha1 = "5b7690dd212e026bbab1860016a6601cb077ab66"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
-version = "1.3.1"
+version = "1.3.2"
 
 [[deps.Plots]]
 deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SnoopPrecompile", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
@@ -1675,9 +1794,9 @@ version = "0.33.21"
 
 [[deps.StatsFuns]]
 deps = ["ChainRulesCore", "HypergeometricFunctions", "InverseFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
-git-tree-sha1 = "89a3bfe98f5400f4ff58bb5cd1a9e46f95d08352"
+git-tree-sha1 = "ab6083f09b3e617e34a956b43e9d51b824206932"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-version = "1.1.0"
+version = "1.1.1"
 
 [[deps.StatsPlots]]
 deps = ["AbstractFFTs", "Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "LinearAlgebra", "MultivariateStats", "NaNMath", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
@@ -1752,9 +1871,9 @@ uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.TranscodingStreams]]
 deps = ["Random", "Test"]
-git-tree-sha1 = "8a75929dcd3c38611db2f8d08546decb514fcadf"
+git-tree-sha1 = "e4bdc63f5c6d62e80eb1c0043fcc0360d5950ff7"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
-version = "0.9.9"
+version = "0.9.10"
 
 [[deps.Transducers]]
 deps = ["Adapt", "ArgCheck", "BangBang", "Baselet", "CompositionsBase", "DefineSingletons", "Distributed", "InitialValues", "Logging", "Markdown", "MicroCollections", "Requires", "Setfield", "SplittablesBase", "Tables"]
@@ -2103,6 +2222,11 @@ version = "1.4.1+0"
 # ╟─6c2b4ecb-86f8-4b17-a1f9-7c055589ccba
 # ╟─d279f14c-ab74-46f3-8ec0-42b4058fda0e
 # ╟─44643daf-48fe-4774-bdd6-512030b30ac1
+# ╟─a199cb3b-0b90-4b1b-b1e7-f80a7596ac42
+# ╠═097a7ce4-832e-4982-b762-9903f143ffa1
+# ╠═3a7fc3b9-e613-469e-b806-bb739de8f3dd
+# ╠═626db287-dd44-4119-866e-1ba63f6f5b46
+# ╠═5985148a-0801-4822-9409-bebdd4eaca70
 # ╟─1961d39a-2088-4036-b969-c58b9fba7a95
 # ╠═e6b7fcf1-3a51-4cc2-b2af-b961f52f43d2
 # ╠═abdecbd1-b034-49c8-9e51-6ff41da56ef2
@@ -2133,5 +2257,22 @@ version = "1.4.1+0"
 # ╠═fa2c8ca3-f087-4f68-91b5-1ad9f7368e66
 # ╠═b3f4986d-73f4-4d1d-8a13-bd60a502b041
 # ╟─5a50e2b6-4d5b-4a8b-86e6-e125487e88f4
+# ╠═0099c2d3-68e6-4e25-a970-f987bcd21b41
+# ╟─3541c307-52fd-4ac5-9a26-14778c1846da
+# ╠═48fe8aa0-166b-4d2b-b79e-55af3d46a29e
+# ╟─ee629463-f164-4f4d-96f5-00cb6c742b86
+# ╠═b0f5d306-ed68-4027-96ca-5e3facdf5097
+# ╟─cef05884-1b63-4f9d-b3a5-5f18f51f52cb
+# ╠═851edf21-a5d8-4f29-b2b2-bc5ef1289540
+# ╟─4ece65f2-5e99-46e5-9c5d-8881e86d1c1a
+# ╠═20603dda-e08a-4d09-bbdf-dd5b9426cb4b
+# ╟─de1bd127-3984-4bd6-bf4f-879f4f3b01f3
+# ╠═31e34bcf-e307-4349-a1bc-8382c47df190
+# ╟─1a979cb0-b58c-4bcc-82d2-3c5ef7fef844
+# ╠═f19c0254-854e-4010-bceb-542c923edd78
+# ╟─f905706b-cddf-4df6-bda1-fab5d76ce22a
+# ╠═7a551ec9-e922-4ccb-a2e4-cb4655855a9f
+# ╟─d9130545-c499-4ab2-bae0-6c646b184256
+# ╟─bac17589-8f36-43f6-b950-d268f916d748
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
