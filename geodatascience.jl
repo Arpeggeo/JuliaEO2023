@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.16
+# v0.19.17
 
 using Markdown
 using InteractiveUtils
@@ -33,7 +33,7 @@ begin
 	# workaround for https://github.com/fonsp/Pluto.jl/issues/2309
 	PlutoRunner.pluto_showable(
 		::MIME"application/vnd.pluto.table+object",
-		::MeshData) = true
+		::Data) = true
 end;
 
 # ╔═╡ 23084266-e725-4b99-aa90-6bdb4622fd1c
@@ -216,11 +216,6 @@ The result will show below when you get the right answer.
 # ╔═╡ d279f14c-ab74-46f3-8ec0-42b4058fda0e
 begin
 	bonnie = scored1 ? answer(csv) : nothing
-end
-
-# ╔═╡ 44643daf-48fe-4774-bdd6-512030b30ac1
-if scored1
-	plot(bonnie, (:Auppm,), size = (600, 600), title = "Found gold!")
 end
 
 # ╔═╡ a199cb3b-0b90-4b1b-b1e7-f80a7596ac42
@@ -492,7 +487,7 @@ CSV = "~0.10.7"
 DataFrames = "~1.4.4"
 GeoStats = "~0.36.2"
 GeoStatsPlots = "~0.1.4"
-Plots = "~1.36.6"
+Plots = "~1.37.2"
 PlutoTeachingTools = "~0.2.5"
 PlutoUI = "~0.7.49"
 StatsPlots = "~0.15.4"
@@ -504,7 +499,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "dab91ef451a0c3b7585555f5d7a5e82a6fff285a"
+project_hash = "38010ad30ae4f5f0a278127e95b0723634e7656c"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1355,9 +1350,9 @@ version = "0.1.4"
 
 [[deps.Meshes]]
 deps = ["Bessels", "CircularArrays", "Distances", "IterTools", "LinearAlgebra", "NearestNeighbors", "Random", "ReferenceFrameRotations", "SparseArrays", "StaticArrays", "StatsBase", "Tables", "TransformsBase"]
-git-tree-sha1 = "851e7a6f5ba81c0faf2a447f1af971af6497de77"
+git-tree-sha1 = "80ae86f35d1bf891433273fd6ea85f87a13029fb"
 uuid = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
-version = "0.26.3"
+version = "0.26.4"
 
 [[deps.MicroCollections]]
 deps = ["BangBang", "InitialValues", "Setfield"]
@@ -1525,10 +1520,10 @@ uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.3.2"
 
 [[deps.Plots]]
-deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SnoopPrecompile", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
-git-tree-sha1 = "6a9521b955b816aa500462951aa67f3e4467248a"
+deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Preferences", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SnoopPrecompile", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
+git-tree-sha1 = "dadd6e31706ec493192a70a7090d369771a9a22a"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.36.6"
+version = "1.37.2"
 
 [[deps.PlutoHooks]]
 deps = ["InteractiveUtils", "Markdown", "UUIDs"]
@@ -2221,7 +2216,6 @@ version = "1.4.1+0"
 # ╟─ca1b4dbc-0b09-4d12-9973-ca2963df0a74
 # ╟─6c2b4ecb-86f8-4b17-a1f9-7c055589ccba
 # ╟─d279f14c-ab74-46f3-8ec0-42b4058fda0e
-# ╟─44643daf-48fe-4774-bdd6-512030b30ac1
 # ╟─a199cb3b-0b90-4b1b-b1e7-f80a7596ac42
 # ╠═097a7ce4-832e-4982-b762-9903f143ffa1
 # ╠═3a7fc3b9-e613-469e-b806-bb739de8f3dd
