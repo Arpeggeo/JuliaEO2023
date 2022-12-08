@@ -375,7 +375,7 @@ To illustrate the functionality, let's start by transforming the point geometrie
 """
 
 # ╔═╡ 0099c2d3-68e6-4e25-a970-f987bcd21b41
-box(point) = Box(point - Vec(0.5,0.5,0.5), point + Vec(0.5,0.5,0.5))
+box(point) = Box(point - Vec(2.,2.,2.), point + Vec(2.,2.,2.))
 
 # ╔═╡ 3541c307-52fd-4ac5-9a26-14778c1846da
 md"""
@@ -455,7 +455,7 @@ begin
 	scored2 = false
 	if ismissing(mass)
 		still_missing()
-	elseif mass isa Number && mass ≈ 22898.09798728
+	elseif mass isa Number && mass ≈ 1.46547827118592e6
 		scored2 = true
 		correct()
 	else
@@ -465,6 +465,9 @@ end
 
 # ╔═╡ bac17589-8f36-43f6-b950-d268f916d748
 hint(md"The function `volume` can be used to compute volumes.")
+
+# ╔═╡ c239b627-9d8c-4228-99db-b4c38556ff68
+viz(mined, variable = :mass)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -598,10 +601,10 @@ uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 version = "0.4.2"
 
 [[deps.CSV]]
-deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "Tables", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "c5fd7cd27ac4aed0acf4b73948f0110ff2a854b2"
+deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "SnoopPrecompile", "Tables", "Unicode", "WeakRefStrings", "WorkerUtilities"]
+git-tree-sha1 = "8c73e96bd6817c2597cfd5615b91fca5deccf1af"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.10.7"
+version = "0.10.8"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -658,9 +661,9 @@ version = "1.0.6"
 
 [[deps.CodeTracking]]
 deps = ["InteractiveUtils", "UUIDs"]
-git-tree-sha1 = "cc4bd91eba9cdbbb4df4746124c22c0832a460d6"
+git-tree-sha1 = "3bf60ba2fae10e10f70d53c070424e40a820dac2"
 uuid = "da1fd8a2-8d9e-5ec2-8556-3022fb5608a2"
-version = "1.1.1"
+version = "1.1.2"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -826,9 +829,9 @@ version = "0.25.79"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
-git-tree-sha1 = "c36550cb29cbe373e95b3f40486b9a4148f89ffd"
+git-tree-sha1 = "2fb1e02f2b635d0845df5d7c167fec4dd739b00d"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-version = "0.9.2"
+version = "0.9.3"
 
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
@@ -1474,9 +1477,9 @@ version = "0.6.4"
 
 [[deps.Meshes]]
 deps = ["Bessels", "CircularArrays", "Distances", "IterTools", "LinearAlgebra", "NearestNeighbors", "Random", "ReferenceFrameRotations", "SparseArrays", "StaticArrays", "StatsBase", "Tables", "TransformsBase"]
-git-tree-sha1 = "80ae86f35d1bf891433273fd6ea85f87a13029fb"
+git-tree-sha1 = "0939a2035a6fc5c6df1fc16f7b0aae4b1a125d5a"
 uuid = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
-version = "0.26.4"
+version = "0.26.6"
 
 [[deps.MicroCollections]]
 deps = ["BangBang", "InitialValues", "Setfield"]
@@ -2177,6 +2180,11 @@ git-tree-sha1 = "de67fa59e33ad156a590055375a30b23c40299d3"
 uuid = "efce3f68-66dc-5838-9240-27a6d6f5f9b6"
 version = "0.5.5"
 
+[[deps.WorkerUtilities]]
+git-tree-sha1 = "5ef49b0d5cdda47c93a8eb1d5632501f2d422781"
+uuid = "76eceee3-57b5-4d4a-8e66-0e911cebbf60"
+version = "1.6.0"
+
 [[deps.XML2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "Zlib_jll"]
 git-tree-sha1 = "58443b63fb7e465a8a7210828c91c08b92132dff"
@@ -2405,5 +2413,6 @@ version = "3.5.0+0"
 # ╠═7a551ec9-e922-4ccb-a2e4-cb4655855a9f
 # ╟─d9130545-c499-4ab2-bae0-6c646b184256
 # ╟─bac17589-8f36-43f6-b950-d268f916d748
+# ╠═c239b627-9d8c-4228-99db-b4c38556ff68
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
