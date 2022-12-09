@@ -138,7 +138,7 @@ Let's assume that the measurements are associated with random points in 2D space
 pointdata = georef(table, rand(Point2, 100))
 
 # ╔═╡ 13ffa2c5-a694-4dda-bddf-8dbd796af973
-viz(pointdata, variable = :a)
+pointdata |> viewer
 
 # ╔═╡ b4154684-adaf-4a3e-bc87-98e31b8492c4
 md"""
@@ -149,7 +149,7 @@ Alternatively, they could be associated with quadrangle geometries in a Cartesia
 griddata = georef(table, CartesianGrid(10, 10))
 
 # ╔═╡ feae2a69-5768-4036-8d75-bd95da78f759
-viz(griddata, variable = :a)
+griddata |> viewer
 
 # ╔═╡ 3bf6d731-4fbe-4795-ab55-f00bf8058560
 md"""
@@ -467,7 +467,7 @@ end
 hint(md"The function `volume` can be used to compute volumes.")
 
 # ╔═╡ c239b627-9d8c-4228-99db-b4c38556ff68
-viz(mined, variable = :mass)
+mined |> viewer
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -996,9 +996,9 @@ version = "0.2.2"
 
 [[deps.GeoStatsViz]]
 deps = ["Distances", "GeoStatsBase", "Makie", "MeshViz", "Meshes", "Reexport", "Variography"]
-git-tree-sha1 = "9e9ad67b665ba6705e8973e7281f460b194d0fd9"
+git-tree-sha1 = "47636f637bb0f9961933b633b58406d96114c547"
 uuid = "36492b79-4a51-4dff-89b6-31e03c9a81c2"
-version = "0.1.5"
+version = "0.1.6"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "GeoInterface", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
@@ -1254,9 +1254,9 @@ version = "2.1.2+0"
 
 [[deps.JuliaInterpreter]]
 deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
-git-tree-sha1 = "2a64e529fd5b228224360f80f3314a633f30e0e1"
+git-tree-sha1 = "847da597e4271c88bb54b8c7dfbeac44ea85ace4"
 uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
-version = "0.9.17"
+version = "0.9.18"
 
 [[deps.KernelDensity]]
 deps = ["Distributions", "DocStringExtensions", "FFTW", "Interpolations", "StatsBase"]
@@ -1471,9 +1471,9 @@ version = "2.28.0+0"
 
 [[deps.MeshViz]]
 deps = ["CategoricalArrays", "ColorSchemes", "Colors", "Makie", "Meshes", "ScientificTypes", "Tables"]
-git-tree-sha1 = "c93caea8ad87bd3cdaf23e6ffed72eda759ce818"
+git-tree-sha1 = "86435de2b217e821d5f8d8a367b6b6379a5e608a"
 uuid = "9ecf9c4f-6e5a-4b5e-83ae-06f2c7a661d8"
-version = "0.6.4"
+version = "0.7.0"
 
 [[deps.Meshes]]
 deps = ["Bessels", "CircularArrays", "Distances", "IterTools", "LinearAlgebra", "NearestNeighbors", "Random", "ReferenceFrameRotations", "SparseArrays", "StaticArrays", "StatsBase", "Tables", "TransformsBase"]
@@ -2181,9 +2181,9 @@ uuid = "efce3f68-66dc-5838-9240-27a6d6f5f9b6"
 version = "0.5.5"
 
 [[deps.WorkerUtilities]]
-git-tree-sha1 = "5ef49b0d5cdda47c93a8eb1d5632501f2d422781"
+git-tree-sha1 = "cd1659ba0d57b71a464a29e64dbc67cfe83d54e7"
 uuid = "76eceee3-57b5-4d4a-8e66-0e911cebbf60"
-version = "1.6.0"
+version = "1.6.1"
 
 [[deps.XML2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "Zlib_jll"]
