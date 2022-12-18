@@ -24,6 +24,7 @@ begin
 	using Statistics
 	using GeoTables
 	using PlutoTeachingTools
+	import PlutoUI
 
 	# import Makie's WebGL backend
 	import WGLMakie as Mke
@@ -32,7 +33,10 @@ begin
 	PlutoRunner.pluto_showable(
 		::MIME"application/vnd.pluto.table+object",
 		::Data) = true
-end;
+
+	# add table of contents to the side
+	PlutoUI.TableOfContents(title="Contents")
+end
 
 # ╔═╡ d812a6c8-b676-439c-90d6-c8a0b47c29d6
 html"""
@@ -121,7 +125,7 @@ html"""
         <div class="column";">
             <h2>Objectives</h2>
             <ol>
-  				<li>Introduce fundamental geodata concepts</li>
+  				<li>Introduce important fundamental concepts</li>
   				<li>Learn the "right way" of doing geodata science</li>
   				<li>Practice concepts and tools with exercises</li>
 				<li>Design sophisticated geospatial pipelines</li>
@@ -280,9 +284,14 @@ griddata[:,:geometry]
 md"""
 ## Geospatial transforms 🌎 🔁 🌍 🔁 🗾
 
-Data sets often come with missing values, poorly formatted variable names, among other issues. We provide **geospatial transforms** that can be used to pre-process geospatial data for more sophisticated workflows.
+Data sets often come with missing values, poorly formatted variable names, among other issues. We provide **geospatial transforms** that can be used to pre-process geospatial data in more sophisticated workflows.
 
-As an example, we can drop rows with missing values and rename variables to more readable names:
+In the following basic example, we define two such transforms that
+
+1. drop rows with missing values and
+2. rename variables to more readable names
+
+These transforms are placed into a sequential pipeline with the `→` (`\to`) operator:
 """
 
 # ╔═╡ e6b7fcf1-3a51-4cc2-b2af-b961f52f43d2
@@ -290,11 +299,26 @@ pipe₀ = DropMissing() → Rename(:Auppm => :Au, :Agppm => :Ag, :Cuppm => :Cu,
 	                           :Asppm => :As, :Sper => :S, :CODE => :geo,
 							   :OX => :litho, :ISBD => :ρ)
 
+# ╔═╡ f3f6fb26-0341-4491-8858-23002788bc13
+md"""
+We load the Bonnie data set again:
+"""
+
 # ╔═╡ abdecbd1-b034-49c8-9e51-6ff41da56ef2
 raw = georef(csv, (:EAST,:NORTH,:RL))
 
+# ╔═╡ 62da1d70-3ab1-4513-a1c1-cab794e3517c
+md"""
+and apply the pipeline to it:
+"""
+
 # ╔═╡ 95199a0a-c4c0-458e-be73-0722022d9959
 data = raw |> pipe₀
+
+# ╔═╡ b21a8e7e-2aa1-4fa6-b459-779d2795f171
+md"""
+### Building pipelines
+"""
 
 # ╔═╡ 770afbad-9aac-4443-a64a-f8660ec71b5b
 md"""
@@ -410,6 +434,11 @@ md"""
 ## Advanced geodata science 🌎 📊 📈 📉
 
 As geodata scientists, we often need to formulate questions that involve both the attributes and the geometries of geospatial data. Answering these questions with traditional data science software can be extremely painful.
+"""
+
+# ╔═╡ 05ab16f1-f26c-459c-9eab-e5059b93b04f
+md"""
+### Geospatial split-apply-combine
 
 We provide a **geospatial split-apply-combine** with the macros **`@groupby`**, **`@transform`** and **`@combine`**.
 
@@ -554,6 +583,7 @@ GeoStatsViz = "36492b79-4a51-4dff-89b6-31e03c9a81c2"
 GeoTables = "e502b557-6362-48c1-8219-d30d308dcdb0"
 JSServe = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
 PlutoTeachingTools = "661c6b06-c737-4d37-b85c-46df65de6f69"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
@@ -565,6 +595,7 @@ GeoStatsViz = "~0.1.5"
 GeoTables = "~1.2.0"
 JSServe = "~1.2.9"
 PlutoTeachingTools = "~0.2.5"
+PlutoUI = "~0.7.49"
 WGLMakie = "~0.8.0"
 """
 
@@ -574,7 +605,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "af5bfea3952c97d85c51cf41ee69f2fb33a26de6"
+project_hash = "f1a87bb5602319d13a20d8698ab013f0e7e7052b"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -2618,8 +2649,11 @@ version = "3.5.0+0"
 # ╠═5985148a-0801-4822-9409-bebdd4eaca70
 # ╟─1961d39a-2088-4036-b969-c58b9fba7a95
 # ╠═e6b7fcf1-3a51-4cc2-b2af-b961f52f43d2
+# ╟─f3f6fb26-0341-4491-8858-23002788bc13
 # ╠═abdecbd1-b034-49c8-9e51-6ff41da56ef2
+# ╟─62da1d70-3ab1-4513-a1c1-cab794e3517c
 # ╠═95199a0a-c4c0-458e-be73-0722022d9959
+# ╟─b21a8e7e-2aa1-4fa6-b459-779d2795f171
 # ╟─770afbad-9aac-4443-a64a-f8660ec71b5b
 # ╠═43b3a2b5-29a2-414f-bc61-505cad078ea2
 # ╟─3b8fd905-000f-4b22-af1b-221fdda43fd6
@@ -2646,6 +2680,7 @@ version = "3.5.0+0"
 # ╠═fa2c8ca3-f087-4f68-91b5-1ad9f7368e66
 # ╠═b3f4986d-73f4-4d1d-8a13-bd60a502b041
 # ╟─5a50e2b6-4d5b-4a8b-86e6-e125487e88f4
+# ╟─05ab16f1-f26c-459c-9eab-e5059b93b04f
 # ╠═0099c2d3-68e6-4e25-a970-f987bcd21b41
 # ╟─3541c307-52fd-4ac5-9a26-14778c1846da
 # ╠═48fe8aa0-166b-4d2b-b79e-55af3d46a29e
