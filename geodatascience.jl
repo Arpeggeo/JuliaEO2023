@@ -34,19 +34,55 @@ begin
 		::Data) = true
 end;
 
-# ╔═╡ 23084266-e725-4b99-aa90-6bdb4622fd1c
+# ╔═╡ d812a6c8-b676-439c-90d6-c8a0b47c29d6
 html"""
-<p style="background-color:lightgrey;color:black;" xmlns:dct="http://purl.org/dc/terms/" xmlns:cc="http://creativecommons.org/ns#" class="license-text"><span rel="dct:title">GeoStats.jl Workshop at AIRCentre</span> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://arpeggeo.tech">Arpeggeo®</a> is licensed under <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" /><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" /><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" /><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1" /></a></p>
-"""
-
-# ╔═╡ fcf7fc2b-c46c-46c4-a3f9-d9fa73d53680
-html"""
-<img src="https://github.com/JuliaEarth/GeoStats.jl/blob/master/docs/src/assets/logo-text.svg?raw=true">
-"""
+<div style="
+position: absolute;
+width: calc(100% - 30px);
+border: 50vw solid #444444;
+border-top: 500px solid #048282;
+border-bottom: none;
+box-sizing: content-box;
+left: calc(-50vw + 15px);
+top: -500px;
+height: 500px;
+pointer-events: none;
+"></div>
+<div style="
+height: 500px;
+width: 100%;
+background: #444444;
+color: #fff;
+padding-top: 68px;
+">
+<span style="
+font-family: Rubik, serif;
+font-weight: 700;
+font-feature-settings: 'lnum', 'pnum';
+"> <p style="
+font-size: 1.5rem;
+opacity: .8;
+"><em>JuliaEO 2023 Workshop:</em></p>
+<p style="text-align: center; font-size: 2rem;">
+<em>Geodata Science & Geostatistical Learning</em>
+</p>
+<p style="
+font-size: 1.5rem;
+text-align: center;
+opacity: .8;
+"><em>presented by Arpeggeo® Technologies</em></p>
+<center>
+<a href="https://arpeggeo.tech"><img src="https://i.imgur.com/xgq72Z7.png" height=200></a>
+</center>
+<style>
+body {
+overflow-x: hidden;
+}
+</style>"""
 
 # ╔═╡ e551d2ac-60a5-44e5-b5fa-fdf96e5c9df3
 md"""
-# Module I: Advanced geodata science
+# Module I: Advanced Geodata Science
 
 **Instructor:** [Júlio Hoffimann](https://juliohm.github.io)
 **E-mail:** [juliohm@arpeggeo.tech](mailto:juliohm@arpeggeo.tech)
@@ -54,6 +90,11 @@ md"""
 
 # ╔═╡ 5e8bbb4f-bb1f-42a3-bc62-b291327c82e1
 ChooseDisplayMode()
+
+# ╔═╡ fcf7fc2b-c46c-46c4-a3f9-d9fa73d53680
+html"""
+<img src="https://github.com/JuliaEarth/GeoStats.jl/blob/master/docs/src/assets/logo-text.svg?raw=true">
+"""
 
 # ╔═╡ 61bcb8bf-6715-44a2-a0cb-cd48a8b64967
 html"""
@@ -87,7 +128,7 @@ html"""
 			</ol>
         </div>
         <div class="column";">
-            <img src="https://arpeggeo.tech/images/logo/arpeggeo-light.svg">
+            <img src="https://i.imgur.com/0Y2bG17.jpg" width=250>
         </div>
 </div>
 </body>
@@ -533,7 +574,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "e2471f55154c4501422ffd466f5161eb0163ac5f"
+project_hash = "af5bfea3952c97d85c51cf41ee69f2fb33a26de6"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1139,9 +1180,9 @@ version = "9.55.0+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Pkg", "Zlib_jll"]
-git-tree-sha1 = "fb83fbe02fe57f2c068013aa94bcdf6760d3a7a7"
+git-tree-sha1 = "d3b3624125c1474292d0d8ed0f65554ac37ddb23"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
-version = "2.74.0+1"
+version = "2.74.0+2"
 
 [[deps.Graphics]]
 deps = ["Colors", "LinearAlgebra", "NaNMath"]
@@ -1487,9 +1528,9 @@ version = "1.42.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
+git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
+version = "1.16.1+2"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2538,10 +2579,10 @@ version = "3.5.0+0"
 # ╔═╡ Cell order:
 # ╟─1a2b97ef-3127-4d79-82a0-c4cc1f0ecabe
 # ╟─15926938-04a3-478a-b525-260b3107afbc
-# ╟─23084266-e725-4b99-aa90-6bdb4622fd1c
-# ╟─fcf7fc2b-c46c-46c4-a3f9-d9fa73d53680
+# ╟─d812a6c8-b676-439c-90d6-c8a0b47c29d6
 # ╟─e551d2ac-60a5-44e5-b5fa-fdf96e5c9df3
 # ╟─5e8bbb4f-bb1f-42a3-bc62-b291327c82e1
+# ╟─fcf7fc2b-c46c-46c4-a3f9-d9fa73d53680
 # ╟─61bcb8bf-6715-44a2-a0cb-cd48a8b64967
 # ╟─c67f15b9-c8b2-420b-980a-7713372a4746
 # ╟─e260b763-5bb3-4e8e-9e22-70761b2a39ca
