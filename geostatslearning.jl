@@ -24,6 +24,7 @@ begin
 
 	# auxiliary packages
 	using CSV
+	using PlyIO
 	using DataFrames
 	using Statistics
 	using TiffImages
@@ -235,10 +236,10 @@ begin
 	𝓅 = LearningProblem(Ωₛ, Ωₜ, 𝓉)
 	
 	# learning model: decision tree
-	𝓂 = MLJ.@load DecisionTreeClassifier pkg=DecisionTree verbosity=0
+	𝒽 = MLJ.@load DecisionTreeClassifier pkg=DecisionTree verbosity=0
 	
 	# learning strategy: naive pointwise learning
-	𝓁 = PointwiseLearn(𝓂())
+	𝓁 = PointwiseLearn(𝒽())
 	
 	# loss function: misclassification loss
 	ℒ = MisclassLoss()
@@ -462,8 +463,130 @@ html"""
 
 # ╔═╡ 4dbc6661-d302-4579-acb9-a27d8b4fae6e
 md"""
-We argue that **geostatistical learning** is a **necessary change of perspective** to advance geospatial predictive technology. Examples like the following example with non-trivial geospatial domains are too difficult to express and/or solve properly within the classical learning framework.
+We argue that **geostatistical learning** is a **necessary change of perspective** to advance geospatial predictive technology. Defining and solving geostatistical problems with these high-level concepts is possible due to the careful design of **GeoStats.jl** and the high-performance of **Julia**.
 """
+
+# ╔═╡ 16564943-fa8d-4377-8518-043eaeaa6fb5
+md"""
+### Advanced 3D mesh example 🌐
+
+Examples like the following example with non-trivial geospatial domains are too difficult to express and/or solve properly within the classical learning framework.
+
+Suppose that we are given a 3D model of a building:
+"""
+
+# ╔═╡ 6b042b30-6de8-43f9-a16a-9b6c035991b2
+begin
+	# helper function to read meshes
+	function loadply(fname)
+		ply = load_ply(fname)
+		x = ply["vertex"]["x"]
+  		y = ply["vertex"]["y"]
+  		z = ply["vertex"]["z"]
+  		points = Point3.(x, y, z)
+  		connec = [connect(Tuple(c.+1)) for c in ply["face"]["vertex_indices"]]
+  		SimpleMesh(points, connec)
+	end
+end;
+
+# ╔═╡ 290c8b7f-00fb-4b95-9221-988c1f118a43
+begin
+	# load polygonal mesh
+	mesh = loadply("data/building.ply")
+
+	# visualize mesh with edges
+	viz(mesh, showfacets = true)
+end
+
+# ╔═╡ 0f8bb5da-3ea2-4ce6-ab4e-5700c6a6a950
+md"""
+We can easily create geometric features such as the area, the perimeter and the maximum inner angle of polygons in the mesh:
+"""
+
+# ╔═╡ a08ad47e-2351-448b-8380-e2e40aef5e16
+begin
+	# define geometric features
+	feat = (AREA = area.(mesh), PERIM = perimeter.(mesh),
+	    	ANGLE = maximum.(innerangles.(mesh)))
+
+	# georeference features on the mesh
+	gdf = georef(feat, mesh)
+end
+
+# ╔═╡ 39b840e2-ac55-418e-be8d-c6f62f5f47d3
+md"""
+Let's visualize these features over the mesh:
+"""
+
+# ╔═╡ 89f971a8-d48f-40ab-877b-f144ab67bb8a
+let
+	# visualize geometric features
+	fig = Mke.Figure(resolution = (650,500))
+	viz(fig[1,1], domain(gdf), color = gdf.AREA)
+	viz(fig[1,2], domain(gdf), color = gdf.PERIM)
+	viz(fig[1,3], domain(gdf), color = gdf.ANGLE)
+	fig
+end
+
+# ╔═╡ 5d8262e8-1294-4b9e-9802-46916f181f9a
+md"""
+Based on the visualization of the feature and a threshold
+τ = $(@bind τ PlutoUI.Scrubbable(0.01:0.01:0.1, default=0.05, format=".02f")),
+we will split the data into two subgroups. We will also introduce a new stress
+variable that we will try to predict:
+"""
+
+# ╔═╡ 8d030f95-1b95-4eda-bff7-7e7be76ce142
+# create new variables over the mesh
+ℬ = @transform(gdf, :GROUP = :PERIM > τ, :STRESS = 1 / (:AREA + eps()))
+
+# ╔═╡ 1b10cc4d-d9c2-4f88-99d5-1a2090da65f8
+md"""
+We are ready to split the data into source and target geometries:
+"""
+
+# ╔═╡ 6cde54f0-92eb-412f-8e31-80e7c781ff62
+# split geospatial data into source and target
+# geometries based on the group feature
+ℬₛ, ℬₜ = @groupby(ℬ, :GROUP)
+
+# ╔═╡ 9c0aedb6-9eb6-4275-8d8f-0a23b7487d4e
+let
+	# visualize source and target geometries
+	fig = Mke.Figure(resolution = (650,500))
+	viz(fig[1,1], domain(ℬₛ), color = :royalblue)
+	viz(fig[1,2], domain(ℬₜ), color = :gray)
+	fig
+end
+
+# ╔═╡ 79f482e4-18a7-4345-a456-57b5c171680f
+md"""
+Let's train a decision tree to predict the stress field based on the geometric features:
+"""
+
+# ╔═╡ 71410005-81b9-4dd8-80e2-e6c73be99a5b
+let
+	# regression task
+	𝓉 = RegressionTask((:AREA,:PERIM,:ANGLE), :STRESS)
+
+	# define GL problem
+	𝓅 = LearningProblem(ℬₛ, ℬₜ, 𝓉)
+
+	# load decision tree
+	𝒽 = MLJ.@load DecisionTreeRegressor pkg=DecisionTree verbosity=0
+
+	# pointwise learning
+	𝓁 = PointwiseLearn(𝒽())
+
+	# solve Gl problem
+	ℬ̂ₜ = solve(𝓅, 𝓁)
+
+	# visualize prediction
+	fig = Mke.Figure(resolution = (650,500))
+	viz(fig[1,1], domain(ℬ̂ₜ), color = ℬ̂ₜ.STRESS)
+	viz(fig[1,2], domain(ℬₜ), color = ℬₜ.STRESS)
+	fig
+end
 
 # ╔═╡ 20dfe897-6503-45e3-9d81-eec69c6a098c
 md"""
@@ -481,7 +604,7 @@ and research opportunities in computational **geo**metry and **geo**statistics.
 
 # ╔═╡ 6975e27b-eee0-4cbe-813b-97d969ff5a27
 md"""
-## Join our community 🇧🇷 🇵🇹 🌍 🫱🏽‍🫲🏼
+## Join our community 🇧🇷 🇵🇹 🫱🏽‍🫲🏼
 
 If you share the feeling that **geo**statistics could be more widely used in the industry or to address global challenges, come join us.
 
@@ -509,6 +632,7 @@ MLJClusteringInterface = "d354fa79-ed1c-40d4-88ef-b8c7bd1568af"
 MLJDecisionTreeInterface = "c6f25543-311c-4c74-83dc-3ea6d1015661"
 PlutoTeachingTools = "661c6b06-c737-4d37-b85c-46df65de6f69"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+PlyIO = "42171d58-473b-503a-8d5f-782019eb09ec"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 TiffImages = "731e570b-9d59-4bfa-96dc-6df516fadf69"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
@@ -523,6 +647,7 @@ MLJClusteringInterface = "~0.1.9"
 MLJDecisionTreeInterface = "~0.3.0"
 PlutoTeachingTools = "~0.2.5"
 PlutoUI = "~0.7.49"
+PlyIO = "~1.1.2"
 TiffImages = "~0.6.2"
 WGLMakie = "~0.8.0"
 """
@@ -533,7 +658,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "d268b7dd264e510ee010a8dd334d72499e583b7f"
+project_hash = "166001609e9e6f6ec50dbd9fdde35311105b0a63"
 
 [[deps.ARFFFiles]]
 deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
@@ -1854,6 +1979,11 @@ git-tree-sha1 = "eadad7b14cf046de6eb41f13c9275e5aa2711ab6"
 uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 version = "0.7.49"
 
+[[deps.PlyIO]]
+git-tree-sha1 = "74619231a7aa262a76f82ae05c7385622d8a5945"
+uuid = "42171d58-473b-503a-8d5f-782019eb09ec"
+version = "1.1.2"
+
 [[deps.PointPatterns]]
 deps = ["Distributions", "GeoStatsBase", "Meshes", "Random"]
 git-tree-sha1 = "413ec56a34f04392f3ed67525787009cffaaf196"
@@ -2537,6 +2667,20 @@ version = "3.5.0+0"
 # ╟─8abb9b94-366b-4b6a-99f8-ebfce64ee57d
 # ╟─8c7a8bf7-c743-48a8-8c60-07dc5872b59d
 # ╟─4dbc6661-d302-4579-acb9-a27d8b4fae6e
+# ╟─16564943-fa8d-4377-8518-043eaeaa6fb5
+# ╟─6b042b30-6de8-43f9-a16a-9b6c035991b2
+# ╠═290c8b7f-00fb-4b95-9221-988c1f118a43
+# ╟─0f8bb5da-3ea2-4ce6-ab4e-5700c6a6a950
+# ╠═a08ad47e-2351-448b-8380-e2e40aef5e16
+# ╟─39b840e2-ac55-418e-be8d-c6f62f5f47d3
+# ╠═89f971a8-d48f-40ab-877b-f144ab67bb8a
+# ╟─5d8262e8-1294-4b9e-9802-46916f181f9a
+# ╠═8d030f95-1b95-4eda-bff7-7e7be76ce142
+# ╟─1b10cc4d-d9c2-4f88-99d5-1a2090da65f8
+# ╠═6cde54f0-92eb-412f-8e31-80e7c781ff62
+# ╟─9c0aedb6-9eb6-4275-8d8f-0a23b7487d4e
+# ╟─79f482e4-18a7-4345-a456-57b5c171680f
+# ╟─71410005-81b9-4dd8-80e2-e6c73be99a5b
 # ╟─20dfe897-6503-45e3-9d81-eec69c6a098c
 # ╟─6975e27b-eee0-4cbe-813b-97d969ff5a27
 # ╟─52e0b4d9-5b38-4337-b154-71bac804b51f
