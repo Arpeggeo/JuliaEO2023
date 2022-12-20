@@ -4,6 +4,16 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
+
 # ╔═╡ d930d668-5b63-4e96-9603-5b047f4136a2
 begin
 	# main package
@@ -12,12 +22,18 @@ begin
 	# visualization recipes
 	using GeoStatsViz
 
-	# auxiliary package
+	# auxiliary packages
 	using CSV
 	using DataFrames
 	using Statistics
+	using TiffImages
 	using PlutoTeachingTools
 	import PlutoUI
+
+	# machine learning stack
+	import MLJ
+	import MLJDecisionTreeInterface
+	import MLJClusteringInterface
 
 	# import Makie's WebGL backend
 	import WGLMakie as Mke
@@ -131,9 +147,354 @@ html"""
 </body>
 """
 
-# ╔═╡ 5795f830-2e0f-4222-8635-c17b59b87803
+# ╔═╡ 563fa9be-9404-467a-b524-ba810b18dffa
 md"""
-## What is geostatistical learning?
+## The classical framework (ML + 🌎)
+
+Recall the definition of well-posed learning problems:
+
+> **Definition ([Mitchell 1997](http://www.cs.cmu.edu/~tom/mlbook.html)).** A computer program is said to **learn** from experience $\mathcal{E}$ with respect to some class of tasks $\mathcal{T}$ and performance measure $\mathcal{P}$, if its performance at tasks in $\mathcal{T}$, as measured by $\mathcal{P}$, improves with experience $\mathcal{E}$.
+
+**Example:** classical statistical learning via empirical risk minimization
+
+$$\hat{h} = \arg\min_{h\in\mathcal{H}} \mathbb{E}_{(\mathbf{x},y) \sim \Pr(\mathbf{x},y)}\left[\mathcal{L}(h(\mathbf{x}), y)\right] \approx \frac{1}{n} \sum_{i=1}^n \mathcal{L}(h(\mathbf{x}^{(i)}),y^{(i)})$$
+
+where $\mathcal{E} \equiv \{(\mathbf{x}^{(i)},y^{(i)})\}_{i=1}^n$ is a data set with $n$ samples, $\mathcal{P} \equiv \mathbb{E}_{(\mathbf{x},y) \sim \Pr(\mathbf{x},y)}\left[\mathcal{L}(h(\mathbf{x}), y)\right]$ is the empirical risk and $\mathcal{T}$ is a classical learning task such as regression or classification.
+
+#### Classical assumptions
+
+1. training samples are i.i.d.
+2. train and test distributions are equal
+3. samples share a common support (i.e. volume)
+
+These assumptions do **not** hold in **geo**spatial applications.
+"""
+
+# ╔═╡ 40c1534e-c113-40cc-96ec-4909f701a67c
+md"""
+### Why the error is so high? 🤔
+
+Suppose we are given a **classification model for pixels** of an image:
+
+- **features ($$\mathbf{x}$$):** bands of satellite image
+- **target ($$y$$):** crop type (soy, corn, ...)
+
+and are asked to estimate its **generalization error** w.r.t. a *target domain* knowing that annotations of crop type are only available at a nearby *source domain*:
+"""
+
+# ╔═╡ 7d8e5818-99cb-4be4-87e6-8474558561f0
+begin
+	# attributes and coordinates x and y
+	data = georef(CSV.File("data/crop.csv"), (:x, :y))
+	
+	# adjust scientific type of crop column
+	Ω = data |> Coerce(:crop => Multiclass)
+	
+	# 20%/80% split along the (1, -1) direction
+	Ωₛ, Ωₜ = split(Ω, 0.2, (1.0, -1.0))
+end;
+
+# ╔═╡ 0a264634-f7ee-4906-a76e-5a0a8b25464f
+let
+	# visualize geospatial domains
+	fig = Mke.Figure(resolution = (650,500))
+	ax  = Mke.Axis(fig[1,1], xlabel = "longitude", ylabel = "latitude")
+	viz!(ax, domain(Ωₛ), color = :royalblue, size = 2)
+	viz!(ax, domain(Ωₜ), color = :gray, size = 2)
+	Mke.lines!(ax, [(270,660), (720,1140)],
+		       linestyle = :dash, color = :black)
+	Mke.annotations!(ax, ["source (𝒟ₛ)","target (𝒟ₜ)"],
+		             [Mke.Point(500,1200), Mke.Point(100,300)],
+		             fontsize = 30, color = [:royalblue,:gray])
+	fig
+end
+
+# ╔═╡ 0cfbca4f-937c-42a1-8f07-2bb5c10ae561
+md"""
+Let's follow the traditional k-fold cross-validation methodology:
+
+1. subdivide the *source domain* $\mathcal{D}_s$ into k random folds
+2. average the empirical risk over the folds
+
+$$\hat\epsilon(h) = \frac{1}{k} \sum_{j=1}^k \frac{1}{|\mathcal{D}_s^{(j)}|} \int_{\mathcal{D}_s^{(j)}} \mathcal{L}(h(\mathbf{x}_\mathbf{u}, y_\mathbf{u}))d\mathbf{u}$$
+"""
+
+# ╔═╡ 1114670c-cf1e-44ff-a490-02a5f759f1c7
+html"""
+<p align="center">
+<img src="https://i.imgur.com/q9EL9sP.png">
+</p>
+"""
+
+# ╔═╡ a7c842e7-5c8b-40d1-a3a9-b746550302a0
+begin
+	# learning task: satellite bands → crop type
+	𝓉 = ClassificationTask((:band1, :band2, :band3, :band4), :crop)
+	
+	# learning problem: train in Ωₛ and predict in Ωₜ
+	𝓅 = LearningProblem(Ωₛ, Ωₜ, 𝓉)
+	
+	# learning model: decision tree
+	𝓂 = MLJ.@load DecisionTreeClassifier pkg=DecisionTree verbosity=0
+	
+	# learning strategy: naive pointwise learning
+	𝓁 = PointwiseLearn(𝓂())
+	
+	# loss function: misclassification loss
+	ℒ = MisclassLoss()
+	
+	# classical 10-fold cross-validation
+	cv = KFoldValidation(10, loss = Dict(:crop => ℒ))
+	
+	# estimate of generalization error
+	ϵ̂cv = error(𝓁, 𝓅, cv)[:crop]
+	
+	# train in Ωₛ and predict in Ωₜ
+	Ω̂ₜ = solve(𝓅, 𝓁)
+	
+	# actual error of the model
+	ϵ = mean(ℒ(Ωₜ.crop, Ω̂ₜ.crop))
+end;
+
+# ╔═╡ 6a99abcb-959b-47f7-95e9-31196d9e63c3
+md"""
+#### Result
+
+The model's estimated error is **$(round(ϵ̂cv*100, digits=2))%** misclassification. However, when we deploy the model in the *target domain* $\mathcal{D}_t$ the error is much higher with **$(round(ϵ*100, digits=2))%** of the samples misclassified.
+
+The error is **$(round(ϵ / ϵ̂cv, digits=2))** times higher than what was expected:
+"""
+
+# ╔═╡ 9dd2c297-6f7b-4ac9-ac5a-d569782d4436
+let
+	fig = Mke.Figure(resolution = (650,300))
+	viz(fig[1,1], domain(Ω̂ₜ), color = Ω̂ₜ.crop, size = 2,
+	    axis = (
+			title = "predicted crop type",
+			xlabel = "longitude", ylabel="latitude"
+		)
+	)
+	viz(fig[1,2], domain(Ωₜ), color = Ωₜ.crop, size = 2,
+		axis = (
+			title = "actual crop type",
+			xlabel = "longitude", ylabel="latitude"
+		)
+	)
+	Mke.linkaxes!(filter(x -> x isa Mke.Axis, fig.content)...)
+	fig
+end
+
+# ╔═╡ e43bc44c-7203-409b-aac7-017b841f4b33
+md"""
+#### What happened?
+
+Cross-validation (CV) relies heavily on the classical assumptions in order to:
+
+1. hold-out points at **random** (red points)
+2. learn model with remaining points (other colors)
+3. estimate error using prediction at hold-out points
+
+(Stone 1974, Geisser 1975)
+"""
+
+# ╔═╡ ee309717-84d1-4c89-aa65-bf8c0a2c7c12
+html"""
+<p align="center">
+<img src="https://i.imgur.com/maO9KQf.png">
+</p>
+"""
+
+# ╔═╡ b23b78b5-bcb4-45d4-87e6-582d037d8ff6
+md"""
+#### Geostatistical validation
+
+In order to avoid the super optimism of CV with random folds, the geostatistics community proposed various alternative methods such as block cross-validation (BCV) and leave-ball-out (LBO).
+
+These methods rely on **systematic partitions** of the source domain, which are often parameterized with a geospatial correlation length $r > 0$.
+"""
+
+# ╔═╡ c833efdf-4858-4764-8494-5c60de8b71b9
+html"""
+<p align="center">
+<img src="https://i.imgur.com/EY9UmeQ.png">
+</p>
+"""
+
+# ╔═╡ cbf2ebea-192e-43b5-886c-a224abddd7c2
+md"""
+We provide efficient **parallel implementations** for all these methods:
+"""
+
+# ╔═╡ e26a0d23-2010-4cc4-8dbc-6abeacfc3b08
+let
+	# learning task: bands → crop type
+	𝓉 = ClassificationTask((:band1, :band2, :band3, :band4), :crop)
+	
+	# learning problem: train in Ωₛ and predict in Ωₜ
+	𝓅 = LearningProblem(Ωₛ, Ωₜ, 𝓉)
+	
+	# learning model: decision tree
+	𝒽 = MLJ.@load DecisionTreeClassifier pkg=DecisionTree verbosity=0
+	
+	# learning strategy: naive pointwise learning
+	𝓁 = PointwiseLearn(𝒽())
+	
+	# loss function: misclassification loss
+	ℒ = MisclassLoss()
+	
+	# block cross-validation with r = 30.
+	bcv = BlockValidation(30., loss = Dict(:crop => ℒ))
+	
+	# estimate of generalization error
+	ϵ̂ = error(𝓁, 𝓅, bcv)[:crop]
+	
+	# train in Ωₛ and predict in Ωₜ
+	Ω̂ₜ = solve(𝓅, 𝓁)
+	
+	# actual error of the model
+	ϵ = mean(ℒ(Ωₜ.crop, Ω̂ₜ.crop))
+	
+	# display estimate and actual error
+	(ϵ̂ = ϵ̂, ϵ = ϵ)
+end
+
+# ╔═╡ 5ca8f81c-d5d1-4916-b987-204bb3cfaf08
+md"""
+and support any learning model implementing the [MLJ.jl](https://github.com/alan-turing-institute/MLJ.jl) interface, which means all learning models from [scikit-learn](https://scikit-learn.org) and more:
+"""
+
+# ╔═╡ 641f8d85-7c04-48b8-be75-3a784e690439
+MLJ.models() |> DataFrame
+
+# ╔═╡ 256cb75b-aba3-4a95-81e2-e58b2d6b6f11
+md"""
+### Why clusters are spread out? 😕
+
+Suppose we are given a micro-CT image such as the image by [Niu et al. 2020.](http://www.digitalrocksportal.org/projects/324), and are asked to segment it into homogeneous geobodies before proceeding with additional statistical analysis:
+"""
+
+# ╔═╡ 51b1eeb7-5698-490c-bf11-ed0861e97bba
+begin
+	# load micro-CT image
+	img = TiffImages.load("data/muCT.tif")
+	
+	# georeference image
+	μCT = georef((intensity = img,))
+	
+	# visualize image
+	fig = Mke.Figure(resolution = (650,500))
+	viz(fig[1,1], domain(μCT), color = μCT.intensity)
+	fig
+end
+
+# ╔═╡ d21c54c2-bf9a-46d8-8e59-082aed1f630a
+md"""
+The segmentation problem can sometimes be solved via unsupervised clustering. However, classical clustering methods such as K-means fail to produce *contiguous* clusters due to the noise in the image:
+"""
+
+# ╔═╡ 546f1be3-1a39-42a1-8792-7d711f24d011
+md"""
+Number of clusters: $(@bind k PlutoUI.Slider(20:5:30, show_value=true))
+"""
+
+# ╔═╡ 3dff0b70-fe32-4eb7-9ff8-cf025fcf9b97
+let
+	# load classical K-means
+	kmeans = MLJ.@load KMeans pkg=Clustering verbosity=0
+
+	# convert intensity to floating point
+	ℐ = @transform(μCT, :intensity = Float64(:intensity))
+
+	# perform statistical clustering
+	𝒞 = cluster(ℐ, kmeans(k = k))
+
+	# visualize clusters.
+	fig = Mke.Figure(resolution = (650,500))
+	viz(fig[1,1], domain(𝒞), color = 𝒞.cluster)
+	fig
+end
+
+# ╔═╡ f98753fb-52f8-4649-b893-c28f4bb0f670
+md"""
+#### Geostatistical clustering
+
+We provide *geostatistical clustering* methods to address this issue such as a generalization of Simple Linear Iterative Clustering (SLIC) that works with any geospatial data, not just images:
+"""
+
+# ╔═╡ 53476a49-8198-4450-b994-695e3ad254bc
+let
+	# convert intensity to floating point
+	ℐ = @transform(μCT, :intensity = Float64(:intensity))
+
+	# perform geostatistical clustering
+	𝒞 = cluster(ℐ, SLIC(45, 1.0))
+
+	# visualize clusters
+	fig = Mke.Figure(resolution = (650,300))
+	viz(fig[1,1], domain(μCT), color = μCT.intensity)
+	viz(fig[1,2], domain(𝒞), color = 𝒞.cluster)
+	Mke.linkaxes!(filter(x -> x isa Mke.Axis, fig.content)...)
+	fig
+end
+
+# ╔═╡ 396023eb-bdb6-42ba-82c5-430665c59702
+md"""
+Thanks to **Julia's high-performance**, our implementations scale.
+"""
+
+# ╔═╡ 8abb9b94-366b-4b6a-99f8-ebfce64ee57d
+md"""
+## Geostatistical Learning (GL) 📌🗺️
+
+### Need for a new framework 🏅
+
+The previous examples illustrate the value of statistical learning methodologies developed specifically for geospatial data ([Hoffimann et al. 2021. Geostatistical Learning: Challenges and Opportunities](https://www.frontiersin.org/articles/10.3389/fams.2021.689393/full)).
+
+>**Definition (GL).** Given a source geospatial domain $\mathcal{D}_s$ and a source learning task $\mathcal{T}_s$, a target geospatial domain $\mathcal{D}_t$ and a target learning task $\mathcal{T}_t$, **Geostatistical Learning** consists of learning $\mathcal{T}_t$ over $\mathcal{D}_t$ using the knowledge acquired while learning $\mathcal{T}_s$ over $\mathcal{D}_s$, assuming that the data in $\mathcal{D}_s$ and $\mathcal{D}_t$ are a single realization of the involved geospatial processes.
+"""
+
+# ╔═╡ 8c7a8bf7-c743-48a8-8c60-07dc5872b59d
+html"""
+<p align="center">
+    <img src="https://i.imgur.com/tZlCW1A.png">
+</p>
+"""
+
+# ╔═╡ 4dbc6661-d302-4579-acb9-a27d8b4fae6e
+md"""
+We argue that **geostatistical learning** is a **necessary change of perspective** to advance geospatial predictive technology. Examples like the following example with non-trivial geospatial domains are too difficult to express and/or solve properly within the classical learning framework.
+"""
+
+# ╔═╡ 20dfe897-6503-45e3-9d81-eec69c6a098c
+md"""
+### Challenges and Opportunities 📚
+
+We have many challenges to address:
+
+- Efficient geostatistical modeling with **geodesics**
+- Adequate correlation structures on **manifolds**
+- Models developed specifically for the **sphere**
+- Many more challenges...
+
+and research opportunities in computational **geo**metry and **geo**statistics.
+"""
+
+# ╔═╡ 6975e27b-eee0-4cbe-813b-97d969ff5a27
+md"""
+## Join our community 🇧🇷 🇵🇹 🌍 🫱🏽‍🫲🏼
+
+If you share the feeling that **geo**statistics could be more widely used in the industry or to address global challenges, come join us.
+
+#### Getting started
+
+Subscribe to the [GeoStats.jl](https://github.com/JuliaEarth/GeoStats.jl) tutorials on YouTube and join the community channel:
+
+[![Zulip](https://img.shields.io/badge/chat-on%20zulip-9cf?style=flat-square)](https://julialang.zulipchat.com/#narrow/stream/276201-geostats.2Ejl)
+"""
+
+# ╔═╡ 52e0b4d9-5b38-4337-b154-71bac804b51f
+html"""
+<iframe width="560" height="315" src="https://www.youtube.com/embed/videoseries?list=PLsH4hc788Z1f1e61DN3EV9AhDlpbhhanw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -143,9 +504,13 @@ CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 GeoStats = "dcc97b0b-8ce5-5539-9008-bb190f959ef6"
 GeoStatsViz = "36492b79-4a51-4dff-89b6-31e03c9a81c2"
+MLJ = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
+MLJClusteringInterface = "d354fa79-ed1c-40d4-88ef-b8c7bd1568af"
+MLJDecisionTreeInterface = "c6f25543-311c-4c74-83dc-3ea6d1015661"
 PlutoTeachingTools = "661c6b06-c737-4d37-b85c-46df65de6f69"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+TiffImages = "731e570b-9d59-4bfa-96dc-6df516fadf69"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
@@ -153,8 +518,12 @@ CSV = "~0.10.8"
 DataFrames = "~1.4.4"
 GeoStats = "~0.36.2"
 GeoStatsViz = "~0.1.6"
+MLJ = "~0.19.0"
+MLJClusteringInterface = "~0.1.9"
+MLJDecisionTreeInterface = "~0.3.0"
 PlutoTeachingTools = "~0.2.5"
 PlutoUI = "~0.7.49"
+TiffImages = "~0.6.2"
 WGLMakie = "~0.8.0"
 """
 
@@ -164,7 +533,13 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "73ba13c65493b937b5fcc5c6f647f092d18b4bd3"
+project_hash = "d268b7dd264e510ee010a8dd334d72499e583b7f"
+
+[[deps.ARFFFiles]]
+deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
+git-tree-sha1 = "e8c8e0a2be6eb4f56b1672e46004463033daa409"
+uuid = "da404889-ca92-49ff-9e8b-0aa6b4d38dc8"
+version = "1.4.1"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -291,6 +666,12 @@ git-tree-sha1 = "5084cc1a28976dd1642c9f337b28a3cb03e0f7d2"
 uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
 version = "0.10.7"
 
+[[deps.CategoricalDistributions]]
+deps = ["CategoricalArrays", "Distributions", "Missings", "OrderedCollections", "Random", "ScientificTypes", "UnicodePlots"]
+git-tree-sha1 = "23fe4c6668776fedfd3747c545cd0d1a5190eb15"
+uuid = "af321ab8-2d2e-40a6-b165-3d674595d28e"
+version = "0.1.9"
+
 [[deps.Chain]]
 git-tree-sha1 = "8c4920235f6c561e401dfe569beb8b924adad003"
 uuid = "8be319e6-bccf-4806-a6f7-6fae938471bc"
@@ -395,6 +776,11 @@ git-tree-sha1 = "455419f7e328a1a2493cabc6428d79e951349769"
 uuid = "a33af91c-f02d-484b-be07-31d278c5ca2b"
 version = "0.1.1"
 
+[[deps.ComputationalResources]]
+git-tree-sha1 = "52cb3ec90e8a8bea0e62e275ba577ad0f74821f7"
+uuid = "ed09eef8-17a6-5b46-8889-db040fac31e3"
+version = "0.3.2"
+
 [[deps.ConstructionBase]]
 deps = ["LinearAlgebra"]
 git-tree-sha1 = "fb21ddd70a051d882a1686a5a550990bbe371a95"
@@ -443,10 +829,20 @@ version = "1.0.0"
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
+[[deps.DecisionTree]]
+deps = ["AbstractTrees", "DelimitedFiles", "LinearAlgebra", "Random", "ScikitLearnBase", "Statistics"]
+git-tree-sha1 = "cbf727a9d5fb18c73dc0cbd21a9c696540bf56ae"
+uuid = "7806a523-6efd-50cb-b5f6-3fa6f1930dbb"
+version = "0.12.1"
+
 [[deps.DefineSingletons]]
 git-tree-sha1 = "0fba8b706d0178b4dc7fd44a96a92382c9065c2c"
 uuid = "244e2a9f-e319-4986-a169-4d1fe445cd52"
 version = "0.1.2"
+
+[[deps.DelimitedFiles]]
+deps = ["Mmap"]
+uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[deps.DensityInterface]]
 deps = ["InverseFunctions", "Test"]
@@ -516,6 +912,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "e3290f2d49e661fbd94046d7e3726ffcb2d41053"
 uuid = "5ae413db-bbd1-5e63-b57d-d24a61df00f5"
 version = "2.2.4+0"
+
+[[deps.EarlyStopping]]
+deps = ["Dates", "Statistics"]
+git-tree-sha1 = "98fdf08b707aaf69f524a6cd0a67858cefe0cfb6"
+uuid = "792122b4-ca99-40de-a6bc-6742525f08b6"
+version = "0.3.0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -884,6 +1286,12 @@ git-tree-sha1 = "fa6287a4469f5e048d763df38279ee729fbd44e5"
 uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 version = "1.4.0"
 
+[[deps.IterationControl]]
+deps = ["EarlyStopping", "InteractiveUtils"]
+git-tree-sha1 = "d7df9a6fdd82a8cfdfe93a94fcce35515be634da"
+uuid = "b3c1a2ee-3fec-4384-bf48-272ea71de57c"
+version = "0.5.3"
+
 [[deps.IteratorInterfaceExtensions]]
 git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
 uuid = "82899510-4779-5014-852e-03e436cf321d"
@@ -971,6 +1379,12 @@ deps = ["Formatting", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdow
 git-tree-sha1 = "ab9aa169d2160129beb241cb2750ca499b4e90e9"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
 version = "0.15.17"
+
+[[deps.LatinHypercubeSampling]]
+deps = ["Random", "StableRNGs", "StatsBase", "Test"]
+git-tree-sha1 = "42938ab65e9ed3c3029a8d2c58382ca75bdab243"
+uuid = "a5e1c1ea-c99a-51d3-a14d-a9a37257b02d"
+version = "1.8.0"
 
 [[deps.LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
@@ -1087,11 +1501,59 @@ git-tree-sha1 = "2ce8695e1e699b68702c03402672a69f54b8aca9"
 uuid = "856f044c-d86e-5d09-b602-aeab76dc8ba7"
 version = "2022.2.0+0"
 
+[[deps.MLJ]]
+deps = ["CategoricalArrays", "ComputationalResources", "Distributed", "Distributions", "LinearAlgebra", "MLJBase", "MLJEnsembles", "MLJIteration", "MLJModels", "MLJTuning", "OpenML", "Pkg", "ProgressMeter", "Random", "ScientificTypes", "Statistics", "StatsBase", "Tables"]
+git-tree-sha1 = "9d79ef8684eb15a6fe4c3654cdb9c5de4868a81e"
+uuid = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
+version = "0.19.0"
+
+[[deps.MLJBase]]
+deps = ["CategoricalArrays", "CategoricalDistributions", "ComputationalResources", "Dates", "DelimitedFiles", "Distributed", "Distributions", "InteractiveUtils", "InvertedIndices", "LinearAlgebra", "LossFunctions", "MLJModelInterface", "Missings", "OrderedCollections", "Parameters", "PrettyTables", "ProgressMeter", "Random", "ScientificTypes", "Serialization", "StatisticalTraits", "Statistics", "StatsBase", "Tables"]
+git-tree-sha1 = "645ad8980fbd61321dc16dc072f97099d9cf60c9"
+uuid = "a7f614a8-145f-11e9-1d2a-a57a1082229d"
+version = "0.21.3"
+
+[[deps.MLJClusteringInterface]]
+deps = ["Clustering", "Distances", "MLJModelInterface"]
+git-tree-sha1 = "3256d67c33a6a1c4f96e15fbce46e451660ebaf6"
+uuid = "d354fa79-ed1c-40d4-88ef-b8c7bd1568af"
+version = "0.1.9"
+
+[[deps.MLJDecisionTreeInterface]]
+deps = ["DecisionTree", "MLJModelInterface", "Random", "Tables"]
+git-tree-sha1 = "74e8076ea6f64fcb490783f2033070b18fa3466f"
+uuid = "c6f25543-311c-4c74-83dc-3ea6d1015661"
+version = "0.3.0"
+
+[[deps.MLJEnsembles]]
+deps = ["CategoricalArrays", "CategoricalDistributions", "ComputationalResources", "Distributed", "Distributions", "MLJBase", "MLJModelInterface", "ProgressMeter", "Random", "ScientificTypesBase", "StatsBase"]
+git-tree-sha1 = "bb8a1056b1d8b40f2f27167fc3ef6412a6719fbf"
+uuid = "50ed68f4-41fd-4504-931a-ed422449fee0"
+version = "0.3.2"
+
+[[deps.MLJIteration]]
+deps = ["IterationControl", "MLJBase", "Random", "Serialization"]
+git-tree-sha1 = "be6d5c71ab499a59e82d65e00a89ceba8732fcd5"
+uuid = "614be32b-d00c-4edb-bd02-1eb411ab5e55"
+version = "0.5.1"
+
 [[deps.MLJModelInterface]]
 deps = ["Random", "ScientificTypesBase", "StatisticalTraits"]
 git-tree-sha1 = "c8b7e632d6754a5e36c0d94a4b466a5ba3a30128"
 uuid = "e80e1ace-859a-464e-9ed9-23947d8ae3ea"
 version = "1.8.0"
+
+[[deps.MLJModels]]
+deps = ["CategoricalArrays", "CategoricalDistributions", "Combinatorics", "Dates", "Distances", "Distributions", "InteractiveUtils", "LinearAlgebra", "MLJModelInterface", "Markdown", "OrderedCollections", "Parameters", "Pkg", "PrettyPrinting", "REPL", "Random", "RelocatableFolders", "ScientificTypes", "StatisticalTraits", "Statistics", "StatsBase", "Tables"]
+git-tree-sha1 = "08203fc87a7f992cee24e7a1b2353e594c73c41c"
+uuid = "d491faf4-2d78-11e9-2867-c94bc002c0b7"
+version = "0.16.2"
+
+[[deps.MLJTuning]]
+deps = ["ComputationalResources", "Distributed", "Distributions", "LatinHypercubeSampling", "MLJBase", "ProgressMeter", "Random", "RecipesBase"]
+git-tree-sha1 = "02688098bd77827b64ed8ad747c14f715f98cfc4"
+uuid = "03970b2e-30c4-11ea-3135-d1576263f10f"
+version = "0.7.4"
 
 [[deps.MacroTools]]
 deps = ["Markdown", "Random"]
@@ -1115,6 +1577,12 @@ version = "0.6.0"
 git-tree-sha1 = "e8b359ef06ec72e8c030463fe02efe5527ee5142"
 uuid = "dbb5928d-eab1-5f90-85c2-b9b0edb7c900"
 version = "0.4.1"
+
+[[deps.MarchingCubes]]
+deps = ["SnoopPrecompile", "StaticArrays"]
+git-tree-sha1 = "ffc66942498a5f0d02b9e7b1b1af0f5873142cdc"
+uuid = "299715c1-40a9-479a-aaf9-4a633d36f717"
+version = "0.1.4"
 
 [[deps.Markdown]]
 deps = ["Base64"]
@@ -1263,6 +1731,12 @@ deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
 version = "0.8.1+0"
 
+[[deps.OpenML]]
+deps = ["ARFFFiles", "HTTP", "JSON", "Markdown", "Pkg"]
+git-tree-sha1 = "88dfa70c818f7a4728c6b82a72a0e597e083938b"
+uuid = "8b6db2d4-7670-4922-a472-f9537c81ab66"
+version = "0.3.0"
+
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "f6e9dba33f9f2c44e08a020b0caf6903be540004"
@@ -1409,6 +1883,11 @@ git-tree-sha1 = "47e5f437cc0e7ef2ce8406ce1e7e24d44915f88d"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
 version = "1.3.0"
 
+[[deps.PrettyPrinting]]
+git-tree-sha1 = "4be53d093e9e37772cc89e1009e8f6ad10c4681b"
+uuid = "54e16d92-306c-5ea0-a30b-337be88ac337"
+version = "0.4.0"
+
 [[deps.PrettyTables]]
 deps = ["Crayons", "Formatting", "LaTeXStrings", "Markdown", "Reexport", "StringManipulation", "Tables"]
 git-tree-sha1 = "96f6db03ab535bdb901300f88335257b0018689d"
@@ -1541,6 +2020,12 @@ git-tree-sha1 = "a8e18eb383b5ecf1b5e6fc237eb39255044fd92b"
 uuid = "30f210dd-8aff-4c5f-94ba-8e64358c1161"
 version = "3.0.0"
 
+[[deps.ScikitLearnBase]]
+deps = ["LinearAlgebra", "Random", "Statistics"]
+git-tree-sha1 = "7877e55c1523a4b336b433da39c8e8c08d2f221f"
+uuid = "6e75b9c4-186b-50bd-896f-2d2496a4843e"
+version = "0.5.0"
+
 [[deps.Scratch]]
 deps = ["Dates"]
 git-tree-sha1 = "f94f779c94e58bf9ea243e77a37e16d9de9126bd"
@@ -1631,6 +2116,12 @@ deps = ["Setfield", "Test"]
 git-tree-sha1 = "e08a62abc517eb79667d0a29dc08a3b589516bb5"
 uuid = "171d559e-b47b-412a-8079-5efa626c420e"
 version = "0.1.15"
+
+[[deps.StableRNGs]]
+deps = ["Random", "Test"]
+git-tree-sha1 = "3be7d49667040add7ee151fefaf1f8c04c8c8276"
+uuid = "860ef19b-820b-49d6-a774-d7a799459cd3"
+version = "1.0.0"
 
 [[deps.StackViews]]
 deps = ["OffsetArrays"]
@@ -1810,6 +2301,12 @@ deps = ["REPL"]
 git-tree-sha1 = "53915e50200959667e78a92a418594b428dffddf"
 uuid = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 version = "0.4.1"
+
+[[deps.UnicodePlots]]
+deps = ["ColorSchemes", "ColorTypes", "Contour", "Crayons", "Dates", "FileIO", "FreeType", "LinearAlgebra", "MarchingCubes", "NaNMath", "Printf", "Requires", "SnoopPrecompile", "SparseArrays", "StaticArrays", "StatsBase", "Unitful"]
+git-tree-sha1 = "e20b01d50cd162593cfd9691628c830769f68987"
+uuid = "b8865327-cd53-5732-bb35-84acbb429228"
+version = "3.3.1"
 
 [[deps.Unitful]]
 deps = ["ConstructionBase", "Dates", "LinearAlgebra", "Random"]
@@ -2012,6 +2509,36 @@ version = "3.5.0+0"
 # ╟─359d0c90-811e-46c3-bd85-f6d8d7f26207
 # ╟─6aea583d-c90f-4986-a2ca-de22fdd24fcd
 # ╟─3ac7700d-658c-40fb-9888-56c874279d2c
-# ╟─5795f830-2e0f-4222-8635-c17b59b87803
+# ╟─563fa9be-9404-467a-b524-ba810b18dffa
+# ╟─40c1534e-c113-40cc-96ec-4909f701a67c
+# ╟─7d8e5818-99cb-4be4-87e6-8474558561f0
+# ╟─0a264634-f7ee-4906-a76e-5a0a8b25464f
+# ╟─0cfbca4f-937c-42a1-8f07-2bb5c10ae561
+# ╟─1114670c-cf1e-44ff-a490-02a5f759f1c7
+# ╟─a7c842e7-5c8b-40d1-a3a9-b746550302a0
+# ╟─6a99abcb-959b-47f7-95e9-31196d9e63c3
+# ╟─9dd2c297-6f7b-4ac9-ac5a-d569782d4436
+# ╟─e43bc44c-7203-409b-aac7-017b841f4b33
+# ╟─ee309717-84d1-4c89-aa65-bf8c0a2c7c12
+# ╟─b23b78b5-bcb4-45d4-87e6-582d037d8ff6
+# ╟─c833efdf-4858-4764-8494-5c60de8b71b9
+# ╟─cbf2ebea-192e-43b5-886c-a224abddd7c2
+# ╠═e26a0d23-2010-4cc4-8dbc-6abeacfc3b08
+# ╟─5ca8f81c-d5d1-4916-b987-204bb3cfaf08
+# ╟─641f8d85-7c04-48b8-be75-3a784e690439
+# ╟─256cb75b-aba3-4a95-81e2-e58b2d6b6f11
+# ╟─51b1eeb7-5698-490c-bf11-ed0861e97bba
+# ╟─d21c54c2-bf9a-46d8-8e59-082aed1f630a
+# ╟─546f1be3-1a39-42a1-8792-7d711f24d011
+# ╟─3dff0b70-fe32-4eb7-9ff8-cf025fcf9b97
+# ╟─f98753fb-52f8-4649-b893-c28f4bb0f670
+# ╟─53476a49-8198-4450-b994-695e3ad254bc
+# ╟─396023eb-bdb6-42ba-82c5-430665c59702
+# ╟─8abb9b94-366b-4b6a-99f8-ebfce64ee57d
+# ╟─8c7a8bf7-c743-48a8-8c60-07dc5872b59d
+# ╟─4dbc6661-d302-4579-acb9-a27d8b4fae6e
+# ╟─20dfe897-6503-45e3-9d81-eec69c6a098c
+# ╟─6975e27b-eee0-4cbe-813b-97d969ff5a27
+# ╟─52e0b4d9-5b38-4337-b154-71bac804b51f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
