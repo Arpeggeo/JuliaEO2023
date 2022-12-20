@@ -588,36 +588,43 @@ let
 	fig
 end
 
+# ╔═╡ b8a862c0-02b8-419d-acc0-1ead2a9347d0
+md"""
+Notice how naïve learning models applied pointwise fail to capture the change of support (i.e. area) between source and target geometries.
+"""
+
 # ╔═╡ 20dfe897-6503-45e3-9d81-eec69c6a098c
 md"""
-### Challenges and Opportunities 📚
+#### Challenges and Opportunities
 
-We have many challenges to address:
+There are many challenges to address:
 
 - Efficient geostatistical modeling with **geodesics**
 - Adequate correlation structures on **manifolds**
 - Models developed specifically for the **sphere**
+- Models that consider the **support** of the data
 - Many more challenges...
 
 and research opportunities in computational **geo**metry and **geo**statistics.
 """
 
-# ╔═╡ 6975e27b-eee0-4cbe-813b-97d969ff5a27
+# ╔═╡ e2339c4b-6469-4595-9e0a-e6e65b81f0fd
 md"""
-## Join our community 🇧🇷 🇵🇹 🫱🏽‍🫲🏼
+## Contact information 📨
 
-If you share the feeling that **geo**statistics could be more widely used in the industry or to address global challenges, come join us.
+We are happy to assist professionals with **academic and enterprise training** as well as specialized **software solutions and services** for businesses that would like to make better use of **geospatial data**.
 
-#### Getting started
-
-Subscribe to the [GeoStats.jl](https://github.com/JuliaEarth/GeoStats.jl) tutorials on YouTube and join the community channel:
-
-[![Zulip](https://img.shields.io/badge/chat-on%20zulip-9cf?style=flat-square)](https://julialang.zulipchat.com/#narrow/stream/276201-geostats.2Ejl)
+Don't hesitate to contact us.
 """
 
-# ╔═╡ 52e0b4d9-5b38-4337-b154-71bac804b51f
-html"""
-<iframe width="560" height="315" src="https://www.youtube.com/embed/videoseries?list=PLsH4hc788Z1f1e61DN3EV9AhDlpbhhanw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+# ╔═╡ 2914807f-4235-4446-90a0-2cd5f40b7f4a
+md"""
+### Arpeggeo® Technologies
+
+[![arpeggeo](https://i.imgur.com/ikHkre5.png)](https://arpeggeo.tech)
+
+#### Website: [https://arpeggeo.tech](https://arpeggeo.tech)
+#### E-mail: [contact@arpeggeo.tech](mailto:contact@arpeggeo.tech)
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -658,7 +665,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "166001609e9e6f6ec50dbd9fdde35311105b0a63"
+project_hash = "01d8e876f2194b4fa8870a2f8e37c9a1f04a51a3"
 
 [[deps.ARFFFiles]]
 deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
@@ -2681,8 +2688,9 @@ version = "3.5.0+0"
 # ╟─9c0aedb6-9eb6-4275-8d8f-0a23b7487d4e
 # ╟─79f482e4-18a7-4345-a456-57b5c171680f
 # ╟─71410005-81b9-4dd8-80e2-e6c73be99a5b
+# ╟─b8a862c0-02b8-419d-acc0-1ead2a9347d0
 # ╟─20dfe897-6503-45e3-9d81-eec69c6a098c
-# ╟─6975e27b-eee0-4cbe-813b-97d969ff5a27
-# ╟─52e0b4d9-5b38-4337-b154-71bac804b51f
+# ╟─e2339c4b-6469-4595-9e0a-e6e65b81f0fd
+# ╟─2914807f-4235-4446-90a0-2cd5f40b7f4a
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
