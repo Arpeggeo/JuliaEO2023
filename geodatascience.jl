@@ -6,8 +6,11 @@ using InteractiveUtils
 
 # ╔═╡ 1a2b97ef-3127-4d79-82a0-c4cc1f0ecabe
 begin
+	# port for Makie visualization
+	port = parse(Int, get(ENV, "JS_SERVE_PORT", "8000"))
+
 	using JSServe
-	Page()
+	Page(listen_port = port)
 end
 
 # ╔═╡ 15926938-04a3-478a-b525-260b3107afbc

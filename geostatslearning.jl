@@ -14,6 +14,15 @@ macro bind(def, element)
     end
 end
 
+# ╔═╡ d0d7a0a1-2f2d-42ed-b28c-19202d8d7a67
+begin
+	# port for Makie visualization
+	port = parse(Int, get(ENV, "JS_SERVE_PORT", "8000"))
+
+	using JSServe
+	Page(listen_port = port)
+end
+
 # ╔═╡ d930d668-5b63-4e96-9603-5b047f4136a2
 begin
 	# main package
@@ -634,6 +643,7 @@ CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 GeoStats = "dcc97b0b-8ce5-5539-9008-bb190f959ef6"
 GeoStatsViz = "36492b79-4a51-4dff-89b6-31e03c9a81c2"
+JSServe = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
 MLJ = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
 MLJClusteringInterface = "d354fa79-ed1c-40d4-88ef-b8c7bd1568af"
 MLJDecisionTreeInterface = "c6f25543-311c-4c74-83dc-3ea6d1015661"
@@ -649,6 +659,7 @@ CSV = "~0.10.8"
 DataFrames = "~1.4.4"
 GeoStats = "~0.36.2"
 GeoStatsViz = "~0.1.6"
+JSServe = "~1.2.9"
 MLJ = "~0.19.0"
 MLJClusteringInterface = "~0.1.9"
 MLJDecisionTreeInterface = "~0.3.0"
@@ -665,7 +676,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "01d8e876f2194b4fa8870a2f8e37c9a1f04a51a3"
+project_hash = "81f709fb8f2962e905ca9c9164919d367965a761"
 
 [[deps.ARFFFiles]]
 deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
@@ -2640,6 +2651,7 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─d0d7a0a1-2f2d-42ed-b28c-19202d8d7a67
 # ╟─d930d668-5b63-4e96-9603-5b047f4136a2
 # ╟─cfbb3d45-1272-4db4-9bf0-7487c1365abd
 # ╟─af74f26b-16e1-4c2e-9b18-0ccb68d06e08
