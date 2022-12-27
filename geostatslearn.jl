@@ -423,13 +423,22 @@ md"""
 We provide *geostatistical clustering* methods to address this issue such as a generalization of Simple Linear Iterative Clustering (SLIC) that works with any geospatial data, not just images:
 """
 
+# ╔═╡ 1ba6e198-95e7-4b23-a7a7-07aad129ca29
+md"""
+$d_t = \sqrt{d_v^2 + m^2 \left(\frac{d_s}{s}\right)^2}$
+
+The total distance $d_t$ is computed in terms of a distance between features $d_v$ and a normalized distanced between geospatial coordinates $d_s$. The hyperparameter $m$ controls geospatial continuity.
+
+m: $(@bind m PlutoUI.Slider(0.0:0.1:1.0, default=0.6, show_value=true))
+"""
+
 # ╔═╡ 53476a49-8198-4450-b994-695e3ad254bc
 let
 	# convert intensity to floating point
 	ℐ = @transform(μCT, :intensity = Float64(:intensity))
 
 	# perform geostatistical clustering
-	𝒞 = cluster(ℐ, SLIC(6, 0.6))
+	𝒞 = cluster(ℐ, SLIC(6, m))
 
 	# visualize clusters
 	fig = Mke.Figure(resolution = (650,300))
@@ -2671,6 +2680,7 @@ version = "3.5.0+0"
 # ╟─d21c54c2-bf9a-46d8-8e59-082aed1f630a
 # ╟─3dff0b70-fe32-4eb7-9ff8-cf025fcf9b97
 # ╟─f98753fb-52f8-4649-b893-c28f4bb0f670
+# ╟─1ba6e198-95e7-4b23-a7a7-07aad129ca29
 # ╟─53476a49-8198-4450-b994-695e3ad254bc
 # ╟─396023eb-bdb6-42ba-82c5-430665c59702
 # ╟─8abb9b94-366b-4b6a-99f8-ebfce64ee57d
