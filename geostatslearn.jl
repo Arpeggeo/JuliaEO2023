@@ -370,23 +370,20 @@ end
 
 # ╔═╡ 5ca8f81c-d5d1-4916-b987-204bb3cfaf08
 md"""
-and support any learning model implementing the [MLJ.jl](https://github.com/alan-turing-institute/MLJ.jl) interface, which means all learning models from [scikit-learn](https://scikit-learn.org) and more:
+and support any learning model implementing the [MLJ.jl](https://github.com/alan-turing-institute/MLJ.jl) interface, which means all learning models from [scikit-learn](https://scikit-learn.org) and more.
 """
-
-# ╔═╡ 641f8d85-7c04-48b8-be75-3a784e690439
-MLJ.models() |> DataFrame
 
 # ╔═╡ 256cb75b-aba3-4a95-81e2-e58b2d6b6f11
 md"""
 ### Why clusters are spread out? 😕
 
-Suppose we are given a micro-CT image such as the image by [Niu et al. 2020.](http://www.digitalrocksportal.org/projects/324), and are asked to segment it into homogeneous geobodies before proceeding with additional statistical analysis:
+Suppose we are given a micro-CT image such as the image by [Niu et al. 2020.](http://www.digitalrocksportal.org/projects/324), and are asked to segment it into homogeneous grains before proceeding with additional statistical analysis:
 """
 
 # ╔═╡ 51b1eeb7-5698-490c-bf11-ed0861e97bba
 begin
 	# load micro-CT image
-	img = TiffImages.load("data/muCT.tif")
+	img = TiffImages.load("data/muCT.tif")[701:900,1:200]
 	
 	# georeference image
 	μCT = georef((intensity = img,))
@@ -402,11 +399,6 @@ md"""
 The segmentation problem can sometimes be solved via unsupervised clustering. However, classical clustering methods such as K-means fail to produce *contiguous* clusters due to the noise in the image:
 """
 
-# ╔═╡ 546f1be3-1a39-42a1-8792-7d711f24d011
-md"""
-Number of clusters: $(@bind k PlutoUI.Slider(20:5:30, show_value=true))
-"""
-
 # ╔═╡ 3dff0b70-fe32-4eb7-9ff8-cf025fcf9b97
 let
 	# load classical K-means
@@ -416,7 +408,7 @@ let
 	ℐ = @transform(μCT, :intensity = Float64(:intensity))
 
 	# perform statistical clustering
-	𝒞 = cluster(ℐ, kmeans(k = k))
+	𝒞 = cluster(ℐ, kmeans(k = 5))
 
 	# visualize clusters.
 	fig = Mke.Figure(resolution = (650,500))
@@ -437,7 +429,7 @@ let
 	ℐ = @transform(μCT, :intensity = Float64(:intensity))
 
 	# perform geostatistical clustering
-	𝒞 = cluster(ℐ, SLIC(45, 1.0))
+	𝒞 = cluster(ℐ, SLIC(6, 0.6))
 
 	# visualize clusters
 	fig = Mke.Figure(resolution = (650,300))
@@ -2674,11 +2666,9 @@ version = "3.5.0+0"
 # ╟─cbf2ebea-192e-43b5-886c-a224abddd7c2
 # ╠═e26a0d23-2010-4cc4-8dbc-6abeacfc3b08
 # ╟─5ca8f81c-d5d1-4916-b987-204bb3cfaf08
-# ╟─641f8d85-7c04-48b8-be75-3a784e690439
 # ╟─256cb75b-aba3-4a95-81e2-e58b2d6b6f11
 # ╟─51b1eeb7-5698-490c-bf11-ed0861e97bba
 # ╟─d21c54c2-bf9a-46d8-8e59-082aed1f630a
-# ╟─546f1be3-1a39-42a1-8792-7d711f24d011
 # ╟─3dff0b70-fe32-4eb7-9ff8-cf025fcf9b97
 # ╟─f98753fb-52f8-4649-b893-c28f4bb0f670
 # ╟─53476a49-8198-4450-b994-695e3ad254bc
