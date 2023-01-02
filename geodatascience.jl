@@ -233,7 +233,7 @@ Read the [georef](https://juliaearth.github.io/GeoStats.jl/stable/data.html) doc
 """
 
 # ╔═╡ 9d023c57-26e0-4eaa-830a-0745ea45e426
-answer(csv) = georef(csv, (:EAST,:NORTH,:RL))
+answer(csv) = missing
 
 # ╔═╡ 08485d26-c599-4836-af95-44115c33c611
 begin
@@ -334,7 +334,7 @@ Read the [transforms](https://juliaearth.github.io/GeoStats.jl/stable/transforms
 """
 
 # ╔═╡ 43b3a2b5-29a2-414f-bc61-505cad078ea2
-pipe₁ = Coalesce(value=0) → Coerce(:geo => Multiclass, :litho => Multiclass)
+pipe₁ = Identity()
 
 # ╔═╡ 3b8fd905-000f-4b22-af1b-221fdda43fd6
 hint(md"`Coalesce` and `Coerce` are your friends.")
@@ -348,7 +348,7 @@ Create a pipeline named `pipe₂` that
 """
 
 # ╔═╡ 796b0ad0-97f2-43ce-a3c8-ad3233c068c4
-pipe₂ = Select(1:5) → PCA()
+pipe₂ = Identity()
 
 # ╔═╡ 0c6b352f-5d4f-4dc3-8e96-c9b1f4d758a5
 hint(md"`Select` columns before the analysis.")
@@ -362,7 +362,7 @@ Create a pipeline named `pipe₃` that
 """
 
 # ╔═╡ b1fc7dfc-8373-4f9c-8317-68f846e089da
-pipe₃ = Select(:ρ) → ZScore()
+pipe₃ = Identity()
 
 # ╔═╡ 3e766129-f47d-4325-a6d8-21c2969e6df1
 hint(md"`Select` columns before computing z-scores.")
@@ -376,7 +376,7 @@ Create a pipeline named `pipe₄` that
 """
 
 # ╔═╡ a4567d04-3127-4f5c-9a2a-eda343ea8f0d
-pipe₄ = StdCoords() → Detrend()
+pipe₄ = Identity()
 
 # ╔═╡ f6418489-e896-42ed-b21b-54eceddc54f4
 hint(md"No more hints, you can do it! 😉")
@@ -510,11 +510,7 @@ You can commute steps (1) and (2) to debug intermediate results.
 """
 
 # ╔═╡ f19c0254-854e-4010-bceb-542c923edd78
-mined = @chain blocks begin
-	@groupby(:litho)
-	@transform(:mass = :ρ * :Au * volume(:geometry))
-	@combine(:mass = sum(:mass))
-end
+mined = missing
 
 # ╔═╡ f905706b-cddf-4df6-bda1-fab5d76ce22a
 md"""
@@ -522,7 +518,7 @@ What is the total mass to be mined?
 """
 
 # ╔═╡ 7a551ec9-e922-4ccb-a2e4-cb4655855a9f
-mass = sum(mined.mass)
+mass = missing
 
 # ╔═╡ d9130545-c499-4ab2-bae0-6c646b184256
 begin
@@ -546,7 +542,7 @@ We can directly visualize these new attributes over arbitrarily complex geospati
 """
 
 # ╔═╡ c239b627-9d8c-4228-99db-b4c38556ff68
-mined |> viewer
+# mined |> viewer
 
 # ╔═╡ 7e6409b8-d1a6-44c1-9004-65da69d507d0
 md"""
@@ -736,7 +732,7 @@ uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 version = "0.10.8"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
