@@ -622,9 +622,17 @@ and research opportunities in computational **geo**metry and **geo**statistics.
 md"""
 ## Contact information 📨
 
-We are happy to assist professionals with **academic and enterprise training** as well as specialized **software solutions and services** for businesses that would like to make better use of **geospatial data**.
+We assist businesses with our **advanced geospatial predictive technology**:
 
-Don't hesitate to contact us.
+- Custom high-performance software
+- Enterprise and academic training
+
+If you are
+
+- Wasting **time** and **money** with existing GIS technologies...
+- Would like to make better use of your **geospatial data**...
+
+don't hesitate to contact us.
 """
 
 # ╔═╡ 2914807f-4235-4446-90a0-2cd5f40b7f4a
@@ -793,7 +801,7 @@ uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 version = "0.10.8"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -2697,12 +2705,12 @@ version = "3.5.0+0"
 # ╠═8d030f95-1b95-4eda-bff7-7e7be76ce142
 # ╟─1b10cc4d-d9c2-4f88-99d5-1a2090da65f8
 # ╠═6cde54f0-92eb-412f-8e31-80e7c781ff62
-# ╟─9c0aedb6-9eb6-4275-8d8f-0a23b7487d4e
+# ╠═9c0aedb6-9eb6-4275-8d8f-0a23b7487d4e
 # ╟─79f482e4-18a7-4345-a456-57b5c171680f
-# ╟─71410005-81b9-4dd8-80e2-e6c73be99a5b
+# ╠═71410005-81b9-4dd8-80e2-e6c73be99a5b
 # ╟─b8a862c0-02b8-419d-acc0-1ead2a9347d0
 # ╟─20dfe897-6503-45e3-9d81-eec69c6a098c
-# ╟─e2339c4b-6469-4595-9e0a-e6e65b81f0fd
+# ╠═e2339c4b-6469-4595-9e0a-e6e65b81f0fd
 # ╟─2914807f-4235-4446-90a0-2cd5f40b7f4a
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
