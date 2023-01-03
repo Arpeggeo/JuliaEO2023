@@ -624,8 +624,8 @@ md"""
 
 We assist businesses with our **advanced geospatial predictive technology**:
 
-- Custom high-performance software
-- Enterprise and academic training
+- Custom high-performance software ✅
+- Enterprise and academic training ✅
 
 If you are
 
@@ -637,12 +637,10 @@ don't hesitate to contact us.
 
 # ╔═╡ 2914807f-4235-4446-90a0-2cd5f40b7f4a
 md"""
-### Arpeggeo® Technologies
-
-[![arpeggeo](https://i.imgur.com/ikHkre5.png)](https://arpeggeo.tech)
-
 #### Website: [https://arpeggeo.tech](https://arpeggeo.tech)
 #### E-mail: [contact@arpeggeo.tech](mailto:contact@arpeggeo.tech)
+
+[![arpeggeo](https://i.imgur.com/ikHkre5.png)](https://arpeggeo.tech)
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -2710,7 +2708,7 @@ version = "3.5.0+0"
 # ╠═71410005-81b9-4dd8-80e2-e6c73be99a5b
 # ╟─b8a862c0-02b8-419d-acc0-1ead2a9347d0
 # ╟─20dfe897-6503-45e3-9d81-eec69c6a098c
-# ╠═e2339c4b-6469-4595-9e0a-e6e65b81f0fd
+# ╟─e2339c4b-6469-4595-9e0a-e6e65b81f0fd
 # ╟─2914807f-4235-4446-90a0-2cd5f40b7f4a
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
