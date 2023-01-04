@@ -31,4 +31,4 @@ If you would like to run all notebooks after the live hands-on session, folow th
 ```julia
 ] add Pluto@0.19.19
 ```
-3. Launch Pluto and open the notebooks [geodatascience.jl](geodatascience.jl) and [geostatslearn.jl](geostatslearn.jl)
+3. Launch Pluto and open the notebooks [geodatascience.jl](geodatascience.jl) and [geostatslearn.jl](geostatslearn.jl).
