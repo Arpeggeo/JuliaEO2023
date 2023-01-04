@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.19
+# v0.19.17
 
 using Markdown
 using InteractiveUtils
@@ -593,9 +593,10 @@ DataFrames = "~1.4.4"
 GeoStats = "~0.36.2"
 GeoStatsViz = "~0.1.5"
 GeoTables = "~1.2.0"
+JSServe = "~2.0.2"
 PlutoTeachingTools = "~0.2.5"
 PlutoUI = "~0.7.49"
-WGLMakie = "~0.8.0"
+WGLMakie = "~0.8.3"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -604,7 +605,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "0d6e93e82734e88571956178a93b06811a5390d4"
+project_hash = "a2600928889fb9a74ab16c0b1016d9b90ef945e2"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.19
+# v0.19.17
 
 using Markdown
 using InteractiveUtils
@@ -667,6 +667,7 @@ CSV = "~0.10.8"
 DataFrames = "~1.4.4"
 GeoStats = "~0.36.2"
 GeoStatsViz = "~0.1.6"
+JSServe = "~2.0.2"
 MLJ = "~0.19.0"
 MLJClusteringInterface = "~0.1.9"
 MLJDecisionTreeInterface = "~0.3.0"
@@ -674,7 +675,7 @@ PlutoTeachingTools = "~0.2.5"
 PlutoUI = "~0.7.49"
 PlyIO = "~1.1.2"
 TiffImages = "~0.6.2"
-WGLMakie = "~0.8.0"
+WGLMakie = "~0.8.3"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -683,7 +684,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "00736fa20a705fe12f7450f5376e5cd27db106c4"
+project_hash = "d623dc27ac7727a12b39e011c4da0cd4f23f1247"
 
 [[deps.ARFFFiles]]
 deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
