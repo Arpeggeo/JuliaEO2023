@@ -24,7 +24,7 @@ For more information, please follow the [event instructions](https://github.com/
 
 ### After the event
 
-If you would like to run the notebooks after the live hands-on session, folow the steps below instead:
+If you would like to run all notebooks after the live hands-on session, folow the steps below instead:
 
 1. Install `Julia v1.8.3` from the [official website](https://julialang.org/downloads).
 2. Install `Pluto v0.19.19` from the Julia REPL:
