@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.17
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
@@ -12,16 +12,6 @@ macro bind(def, element)
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
     end
-end
-
-# ╔═╡ d0d7a0a1-2f2d-42ed-b28c-19202d8d7a67
-begin
-	# setup page for WGLMakie
-	using JSServe
-	wsc = JSServe.WebSocketConnection() do port
-		"http://127.0.0.1:8888/proxy/$(port)"
-	end
-	JSServe.Page(connection=wsc)
 end
 
 # ╔═╡ d930d668-5b63-4e96-9603-5b047f4136a2
@@ -589,7 +579,7 @@ let
 	# pointwise learning
 	𝓁 = PointwiseLearn(𝒽())
 
-	# solve Gl problem
+	# solve GL problem
 	ℬ̂ₜ = solve(𝓅, 𝓁)
 
 	# visualize prediction
@@ -651,7 +641,6 @@ CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 GeoStats = "dcc97b0b-8ce5-5539-9008-bb190f959ef6"
 GeoStatsViz = "36492b79-4a51-4dff-89b6-31e03c9a81c2"
-JSServe = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
 MLJ = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
 MLJClusteringInterface = "d354fa79-ed1c-40d4-88ef-b8c7bd1568af"
 MLJDecisionTreeInterface = "c6f25543-311c-4c74-83dc-3ea6d1015661"
@@ -667,7 +656,6 @@ CSV = "~0.10.8"
 DataFrames = "~1.4.4"
 GeoStats = "~0.36.2"
 GeoStatsViz = "~0.1.6"
-JSServe = "~2.0.2"
 MLJ = "~0.19.0"
 MLJClusteringInterface = "~0.1.9"
 MLJDecisionTreeInterface = "~0.3.0"
@@ -684,7 +672,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "d623dc27ac7727a12b39e011c4da0cd4f23f1247"
+project_hash = "26d02786d68b5936d3bf67c9e823177a14202c7b"
 
 [[deps.ARFFFiles]]
 deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
@@ -2684,7 +2672,6 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╟─d0d7a0a1-2f2d-42ed-b28c-19202d8d7a67
 # ╟─d930d668-5b63-4e96-9603-5b047f4136a2
 # ╟─cfbb3d45-1272-4db4-9bf0-7487c1365abd
 # ╟─af74f26b-16e1-4c2e-9b18-0ccb68d06e08

@@ -1,18 +1,8 @@
 ### A Pluto.jl notebook ###
-# v0.19.17
+# v0.19.19
 
 using Markdown
 using InteractiveUtils
-
-# ╔═╡ 1a2b97ef-3127-4d79-82a0-c4cc1f0ecabe
-begin
-	# setup page for WGLMakie
-	using JSServe
-	wsc = JSServe.WebSocketConnection() do port
-		"http://127.0.0.1:8888/proxy/$(port)"
-	end
-	JSServe.Page(connection=wsc)
-end
 
 # ╔═╡ 15926938-04a3-478a-b525-260b3107afbc
 begin
@@ -581,7 +571,6 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 GeoStats = "dcc97b0b-8ce5-5539-9008-bb190f959ef6"
 GeoStatsViz = "36492b79-4a51-4dff-89b6-31e03c9a81c2"
 GeoTables = "e502b557-6362-48c1-8219-d30d308dcdb0"
-JSServe = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
 PlutoTeachingTools = "661c6b06-c737-4d37-b85c-46df65de6f69"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -593,7 +582,6 @@ DataFrames = "~1.4.4"
 GeoStats = "~0.36.2"
 GeoStatsViz = "~0.1.5"
 GeoTables = "~1.2.0"
-JSServe = "~2.0.2"
 PlutoTeachingTools = "~0.2.5"
 PlutoUI = "~0.7.49"
 WGLMakie = "~0.8.3"
@@ -605,7 +593,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "a2600928889fb9a74ab16c0b1016d9b90ef945e2"
+project_hash = "68d0efd63f14f22582b66b3c4d9c85576635bd6e"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -2645,7 +2633,6 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╟─1a2b97ef-3127-4d79-82a0-c4cc1f0ecabe
 # ╟─15926938-04a3-478a-b525-260b3107afbc
 # ╟─d812a6c8-b676-439c-90d6-c8a0b47c29d6
 # ╟─e551d2ac-60a5-44e5-b5fa-fdf96e5c9df3
