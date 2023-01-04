@@ -13,7 +13,7 @@ Instructor: [Júlio Hoffimann](https://github.com/juliohm)
 
 ### During the event
 
-1. Download/clone the repository folder
+1. [Download](https://github.com/juliohm/JuliaEO2023/archive/refs/heads/main.zip) the repository and unzip the folder
 2. If you have Docker installed, change to the folder and run
 ```bash
 $ docker run -v ${PWD}:/home/javyon/geostats -p 8888:8888 gaelforget/notebooks:latest
