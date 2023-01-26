@@ -2,6 +2,12 @@
 
 Instructor: [Júlio Hoffimann](https://github.com/juliohm)
 
+<p align="center">
+  <a href="https://youtu.be/1FfgjW5XQ9g">
+    <img src="https://img.youtube.com/vi/1FfgjW5XQ9g/maxresdefault.jpg">
+  </a>
+</p>
+
 ## Agenda
 
 - [10min]: Introduction slides
